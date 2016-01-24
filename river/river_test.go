@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/siddontang/go-mysql-elasticsearch/elastic"
-	"github.com/siddontang/go-mysql/client"
+	"github.com/ehalpern/go-mysql-elasticsearch/elastic"
+	"github.com/ehalpern/go-mysql/client"
 	. "gopkg.in/check.v1"
 )
 
