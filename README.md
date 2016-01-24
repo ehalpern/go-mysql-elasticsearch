@@ -1,3 +1,5 @@
+Work in Progress!
+
 go-mysql-elasticsearch is a service syncing your MySQL data into Elasticsearch automatically.
 
 It uses `mysqldump` to fetch the origin data at first, then syncs data incrementally with binlog.
@@ -6,8 +8,8 @@ It uses `mysqldump` to fetch the origin data at first, then syncs data increment
 
 + Install Go and set your [GOPATH](https://golang.org/doc/code.html#GOPATH)
 + Install godep `go get github.com/tools/godep`
-+ `go get github.com/siddontang/go-mysql-elasticsearch`, it will print some messages in console, skip it. :-)
-+ cd `$GOPATH/src/github.com/siddontang/go-mysql-elasticsearch`
++ `go get github.com/ehalpern/go-mysql-elasticsearch`, it will print some messages in console, skip it. :-)
++ cd `$GOPATH/src/github.com/ehalpern/go-mysql-elasticsearch`
 + `make`
 
 ## How to use?
