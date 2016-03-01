@@ -9,10 +9,14 @@ import (
 	"github.com/ehalpern/go-mysql-elasticsearch/elastic"
 	"github.com/ehalpern/go-mysql/client"
 	. "gopkg.in/check.v1"
+	"runtime/debug"
 )
 
-var my_addr = flag.String("my_addr", "127.0.0.1:3306", "MySQL addr")
+var my_addr = flag.String("my_host", "127.0.0.1:3306", "MySQL addr")
+var my_user = flag.String("my_user", "root", "MySQL user")
+var my_pass = flag.String("my_pass", "", "MySQL password")
 var es_addr = flag.String("es_addr", "127.0.0.1:9200", "Elasticsearch addr")
+var useRds = flag.Bool("use_rds", false, "true if using RDS")
 
 func Test(t *testing.T) {
 	TestingT(t)
@@ -26,11 +30,13 @@ type riverTestSuite struct {
 var _ = Suite(&riverTestSuite{})
 
 func (s *riverTestSuite) SetUpSuite(c *C) {
+	debug.SetTraceback("single")
 	var err error
-	s.c, err = client.Connect(*my_addr, "root", "", "test")
+	s.c, err = client.Connect(*my_addr, *my_user, *my_pass, "test")
 	c.Assert(err, IsNil)
-
-	s.testExecute(c, "SET SESSION binlog_format = 'ROW'")
+	if !useRds {
+		s.testExecute(c, "SET SESSION binlog_format = 'ROW'")
+	}
 
 	schema := `
         CREATE TABLE IF NOT EXISTS %s (
@@ -54,15 +60,15 @@ func (s *riverTestSuite) SetUpSuite(c *C) {
 
 	cfg := new(Config)
 	cfg.MyAddr = *my_addr
-	cfg.MyUser = "root"
-	cfg.MyPassword = ""
+	cfg.MyUser = *my_user
+	cfg.MyPassword = *my_pass
 	cfg.ESAddr = *es_addr
 
 	cfg.ServerID = 1001
 	cfg.Flavor = "mysql"
 
 	cfg.DataDir = "/tmp/test_river"
-	cfg.DumpExec = "mysqldump"
+	cfg.DumpExec = "mydumper"
 
 	cfg.StatAddr = "127.0.0.1:12800"
 

@@ -34,15 +34,15 @@ func (s *riverTestSuite) setupExtra(c *C) (r *River) {
 
 	cfg := new(Config)
 	cfg.MyAddr = *my_addr
-	cfg.MyUser = "root"
-	cfg.MyPassword = ""
+	cfg.MyUser = *my_user
+	cfg.MyPassword = *my_pass
 	cfg.ESAddr = *es_addr
 
 	cfg.ServerID = 1001
 	cfg.Flavor = "mysql"
 
 	cfg.DataDir = "/tmp/test_river_extra"
-	cfg.DumpExec = "mysqldump"
+	cfg.DumpExec = "mydumper"
 
 	cfg.StatAddr = "127.0.0.1:12800"
 
