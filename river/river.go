@@ -1,13 +1,16 @@
 package river
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/juju/errors"
 	"github.com/ehalpern/go-mysql/canal"
-
 	"github.com/ehalpern/go-mysql-elasticsearch/elastic"
 	"github.com/siddontang/go/log"
 )
@@ -236,12 +239,32 @@ func ruleKey(schema string, table string) string {
 	return fmt.Sprintf("%s:%s", schema, table)
 }
 
+func (r *River) createIndex(idxFile string) error {
+	data, err := ioutil.ReadFile(idxFile)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	idxName := strings.Split(filepath.Base(idxFile), ".")[0]
+	var idxSettings map[string]interface{}
+	json.Unmarshal(data, &idxSettings)
+	if r.es.IndexExists(idxName) {
+		log.Warnf("Index '%s' already exists; settings and mappings not updated", idxName)
+		return nil
+	}
+	log.Infof("Creating index with settings from %v: %v", idxFile, idxSettings)
+	return r.es.CreateIndex(idxName, idxSettings)
+}
+
 func (r *River) Run() error {
+	if r.c.IndexFile != "" {
+		if err := r.createIndex(r.c.IndexFile); err != nil {
+			return errors.Trace(err)
+		}
+	}
 	if err := r.canal.Start(); err != nil {
 		log.Errorf("start canal err %v", err)
 		return errors.Trace(err)
 	}
-
 	return nil
 }
 

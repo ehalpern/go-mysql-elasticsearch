@@ -12,6 +12,8 @@ import (
 )
 
 var configFile = flag.String("config", "./etc/river.toml", "go-mysql-elasticsearch config file")
+var indexFile = flag.String("index", "", "go-mysql-elasticsearch index file")
+
 var my_addr = flag.String("my_addr", "", "MySQL addr")
 var my_user = flag.String("my_user", "", "MySQL user")
 var my_pass = flag.String("my_pass", "", "MySQL password")
@@ -38,6 +40,10 @@ func main() {
 	if err != nil {
 		println(errors.ErrorStack(err))
 		return
+	}
+
+	if len(*indexFile) > 0 {
+		cfg.IndexFile = *indexFile
 	}
 
 	if len(*my_addr) > 0 {

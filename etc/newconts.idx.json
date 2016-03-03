@@ -1,0 +1,95 @@
+{
+  "settings" : {
+    "number_of_replicas": 0,
+    "number_of_shards" : 6
+  },
+  "mappings": {
+    "newconts": {
+      "_all": {
+        "enabled": false
+      },
+      "dynamic_templates": [
+        {
+          "not_analyzed": {
+            "match": "*",
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "string",
+              "index": "not_analyzed"
+            }
+          }
+        }
+      ],
+      "properties": {
+        "location": {
+          "type": "geo_point"
+        },
+        "date": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "contributor_employer": {
+          "type": "string",
+          "index": "not_analyzed",
+          "fields": {
+            "idx": {
+              "type": "string",
+              "index": "analyzed"
+            }
+          }
+        },
+        "contributor_name": {
+          "type": "string",
+          "index": "not_analyzed",
+          "fields": {
+            "idx": {
+              "type": "string",
+              "index": "analyzed"
+            }
+          }
+        },
+        "contributor_occupation": {
+          "type": "string",
+          "index": "not_analyzed",
+          "fields": {
+            "idx": {
+              "type": "string",
+              "index": "analyzed"
+            }
+          }
+        },
+        "parent_organization_name": {
+          "type": "string",
+          "index": "not_analyzed",
+          "fields": {
+            "idx": {
+              "type": "string",
+              "index": "analyzed"
+            }
+          }
+        },
+        "organization_name": {
+          "type": "string",
+          "index": "not_analyzed",
+          "fields": {
+            "idx": {
+              "type": "string",
+              "index": "analyzed"
+            }
+          }
+        },
+        "recipient_name": {
+          "type": "string",
+          "index": "not_analyzed",
+          "fields": {
+            "idx": {
+              "type": "string",
+              "index": "analyzed"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

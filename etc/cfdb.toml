@@ -1,0 +1,44 @@
+# MySQL address, user and password
+# user must have replication privilege in MySQL.
+my_addr = "testdb.core-data.crowdpac.com:3306"
+my_user = "cproot"
+my_pass = "mpu9v92U7n4U7PqQ"
+
+# Elasticsearch address
+es_addr = "127.0.0.1:9200"
+
+# Path to store data, like master.info, and dump MySQL data 
+data_dir = "./var"
+
+# Inner Http status address
+stat_addr = "127.0.0.1:12800"
+
+# pseudo server id like a slave 
+server_id = 1001
+
+# mysql or mariadb
+flavor = "mysql"
+
+# mysqldump execution path
+mysqldump = "mydumper"
+
+# MySQL data source
+[[source]]
+schema = "cfdb"
+
+# Only below tables will be synced into Elasticsearch.
+# "test_river_[0-9]{4}" is a wildcard table format, you can use it if you have many sub tables, like table_0000 - table_1023
+# I don't think it is necessary to sync all tables in a database.
+tables = ["newconts"]
+
+# Below is for special rule mapping
+[[rule]]
+schema = "cfdb"
+table = "newconts"
+index = "newconts"
+type = "newconts"
+
+    [rule.field]
+#    transaction_id="_id"
+
+

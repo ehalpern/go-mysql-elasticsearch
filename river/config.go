@@ -13,6 +13,8 @@ type SourceConfig struct {
 }
 
 type Config struct {
+	IndexFile string `toml:"indexFile"`
+
 	MyAddr     string `toml:"my_addr"`
 	MyUser     string `toml:"my_user"`
 	MyPassword string `toml:"my_pass"`

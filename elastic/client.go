@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/juju/errors"
+"github.com/siddontang/go/log"
 )
 
 // Although there are many Elasticsearch clients with Go, I still want to implement one by myself.
@@ -178,6 +179,7 @@ func (c *Client) DoBulk(url string, items []*BulkRequest) (*BulkResponse, error)
 		return nil, errors.Trace(err)
 	}
 
+	log.Infof("es reqyest: %v", req)
 	resp, err := c.c.Do(req)
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -185,15 +187,28 @@ func (c *Client) DoBulk(url string, items []*BulkRequest) (*BulkResponse, error)
 
 	ret := new(BulkResponse)
 	ret.Code = resp.StatusCode
-
+	log.Infof("es response: %v", resp)
 	if resp.ContentLength > 0 {
 		d := json.NewDecoder(resp.Body)
 		err = d.Decode(&ret)
+		log.Infof("decode result %v", err)
 	}
 
 	resp.Body.Close()
 
 	return ret, err
+}
+
+func (c *Client) CreateIndex(index string, settings map[string]interface{}) error {
+	reqUrl := fmt.Sprintf("http://%s/%s", c.Addr, url.QueryEscape(index))
+	r, err := c.Do("POST", reqUrl, settings)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	if r.Code != http.StatusOK {
+		return errors.New(fmt.Sprintf("%v", r))
+	}
+	return nil
 }
 
 func (c *Client) CreateMapping(index string, docType string, mapping map[string]interface{}) error {
@@ -280,6 +295,17 @@ func (c *Client) Exists(index string, docType string, id string) (bool, error) {
 	return r.Code == http.StatusOK, nil
 }
 
+func (c *Client) IndexExists(index string) bool {
+	reqUrl := fmt.Sprintf("http://%s/%s", c.Addr, url.QueryEscape(index))
+
+	r, err := c.Do("HEAD", reqUrl, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	return r.Code == http.StatusOK
+}
+
 func (c *Client) Delete(index string, docType string, id string) error {
 	reqUrl := fmt.Sprintf("http://%s/%s/%s/%s", c.Addr,
 		url.QueryEscape(index),
@@ -301,7 +327,7 @@ func (c *Client) Delete(index string, docType string, id string) error {
 // only support parent in 'Bulk' related apis
 func (c *Client) Bulk(items []*BulkRequest) (*BulkResponse, error) {
 	reqUrl := fmt.Sprintf("http://%s/_bulk", c.Addr)
-
+	log.Infof("Bulk put %v", items)
 	return c.DoBulk(reqUrl, items)
 }
 
@@ -319,3 +345,4 @@ func (c *Client) IndexTypeBulk(index string, docType string, items []*BulkReques
 
 	return c.DoBulk(reqUrl, items)
 }
+
