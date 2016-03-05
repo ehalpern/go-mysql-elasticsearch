@@ -34,7 +34,7 @@ func (s *riverTestSuite) SetUpSuite(c *C) {
 	var err error
 	s.c, err = client.Connect(*my_addr, *my_user, *my_pass, "test")
 	c.Assert(err, IsNil)
-	if !useRds {
+	if !*useRds {
 		s.testExecute(c, "SET SESSION binlog_format = 'ROW'")
 	}
 

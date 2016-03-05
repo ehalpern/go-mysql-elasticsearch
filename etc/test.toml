@@ -22,21 +22,17 @@ flavor = "mysql"
 # mysqldump execution path
 mysqldump = "mydumper"
 
+max_bulk_items = 5
+
 # MySQL data source
 [[source]]
 schema = "cfdb"
 
-tables = ["newconts", "cand_db"]
-
-# Below is for special rule mapping
-[[rule]]
-schema = "cfdb"
-table = "newconts"
-index = "newconts"
-type = "newconts"
+tables = ["cand_db_small"]
 
 [[rule]]
 schema = "cfdb"
-table = "cand_db"
+table = "cand_db_small"
 index = "cand_db"
+indexFile = "cand_db.idx.json"
 type = "cand_db"

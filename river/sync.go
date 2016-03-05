@@ -24,7 +24,8 @@ const (
 )
 
 type rowsEventHandler struct {
-	r *River
+	r          *River
+	bulkBuffer []*elastic.BulkRequest
 }
 
 func (h *rowsEventHandler) Do(e *canal.RowsEvent) error {
@@ -50,12 +51,37 @@ func (h *rowsEventHandler) Do(e *canal.RowsEvent) error {
 		return errors.Errorf("make %s ES request err %v", e.Action, err)
 	}
 
-	if err := h.r.doBulk(reqs); err != nil {
-		log.Errorf("do ES bulks err %v, stop", err)
-		return canal.ErrHandleInterrupted
+	if err := h.addToBulkBuffer(reqs); err != nil {
+		return errors.Wrap(err, canal.ErrHandleInterrupted)
 	}
 
 	return nil
+}
+
+func (h *rowsEventHandler) Complete() (err error) {
+	return h.flushBulkBuffer()
+}
+
+func (h *rowsEventHandler) addToBulkBuffer(reqs []*elastic.BulkRequest) (err error) {
+	if len(h.bulkBuffer) + len(reqs) > cap(h.bulkBuffer) {
+		h.flushBulkBuffer()
+	}
+	for _, r := range reqs {
+		h.bulkBuffer = append(h.bulkBuffer, r)
+	}
+	return err
+}
+
+func (h *rowsEventHandler) flushBulkBuffer() (err error) {
+	if len(h.bulkBuffer) > 0 {
+		log.Infof("Submitting batch of %d/%d to elasticsearch", len(h.bulkBuffer), cap(h.bulkBuffer))
+		if err = h.r.doBulk(h.bulkBuffer); err == nil {
+			// reset buffer
+			h.bulkBuffer = h.bulkBuffer[:0]
+			log.Infof("New capacity: %d", cap(h.bulkBuffer))
+		}
+	}
+	return err
 }
 
 func (h *rowsEventHandler) String() string {

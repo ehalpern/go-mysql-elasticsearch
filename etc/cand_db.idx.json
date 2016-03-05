@@ -1,0 +1,35 @@
+{
+  "settings" : {
+    "number_of_replicas": 0,
+    "number_of_shards" : 2
+  },
+  "mappings": {
+    "cand_db": {
+      "_all": { "enabled": false },
+      "dynamic_templates": [{
+        "not_analyzed": {
+          "match": "*",
+          "match_mapping_type": "string",
+          "mapping": { "type": "string", "index": "not_analyzed"}
+        }
+      }],
+      "properties": {
+        "money_network_corp": {
+          "type": "string", "index": "no"
+        },
+        "Name": {
+          "type": "string", "index": "not_analyzed",
+          "fields": { "idx" : { "type": "string", "index": "analyzed" }}
+        },
+        "district": {
+          "type": "string", "index": "not_analyzed",
+          "fields": { "idx" : { "type": "string", "index": "analyzed" }}
+        },
+        "seat": {
+          "type": "string", "index": "not_analyzed",
+          "fields": { "idx" : { "type": "string", "index": "analyzed" }}
+        }
+      }
+    }
+  }
+}

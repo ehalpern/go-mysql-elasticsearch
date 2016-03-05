@@ -13,8 +13,7 @@ type SourceConfig struct {
 }
 
 type Config struct {
-	IndexFile string `toml:"indexFile"`
-
+	ConfigFile string
 	MyAddr     string `toml:"my_addr"`
 	MyUser     string `toml:"my_user"`
 	MyPassword string `toml:"my_pass"`
@@ -30,6 +29,7 @@ type Config struct {
 	DumpExec string `toml:"mysqldump"`
 
 	Sources []SourceConfig `toml:"source"`
+	MaxBulkItems int `toml:"max_bulk_items"`
 
 	Rules []*Rule `toml:"rule"`
 }
@@ -40,7 +40,12 @@ func NewConfigWithFile(name string) (*Config, error) {
 		return nil, errors.Trace(err)
 	}
 
-	return NewConfig(string(data))
+	c, err := NewConfig(string(data));
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	c.ConfigFile = name
+	return c, nil
 }
 
 func NewConfig(data string) (*Config, error) {
@@ -50,6 +55,9 @@ func NewConfig(data string) (*Config, error) {
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-
+	if c.MaxBulkItems == 0 {
+		c.MaxBulkItems = 500
+	}
 	return &c, nil
 }
+
