@@ -13,25 +13,25 @@ type SourceConfig struct {
 }
 
 type Config struct {
-	ConfigFile string
-	MyAddr     string `toml:"my_addr"`
-	MyUser     string `toml:"my_user"`
-	MyPassword string `toml:"my_pass"`
+	ConfigFile     string
+	MyAddr         string `toml:"my_addr"`
+	MyUser         string `toml:"my_user"`
+	MyPassword     string `toml:"my_pass"`
 
-	ESAddr string `toml:"es_addr"`
+	ESAddr         string `toml:"es_addr"`
 
-	StatAddr string `toml:"stat_addr"`
+	StatAddr       string `toml:"stat_addr"`
 
-	ServerID uint32 `toml:"server_id"`
-	Flavor   string `toml:"flavor"`
-	DataDir  string `toml:"data_dir"`
+	ServerID       uint32 `toml:"server_id"`
+	Flavor         string `toml:"flavor"`
+	DataDir        string `toml:"data_dir"`
 
-	DumpExec string `toml:"mysqldump"`
+	DumpExec       string `toml:"mysqldump"`
 
-	Sources []SourceConfig `toml:"source"`
-	MaxBulkItems int `toml:"max_bulk_items"`
+	Sources        []SourceConfig `toml:"source"`
+	MaxBulkActions int `toml:"max_bulk_items"`
 
-	Rules []*Rule `toml:"rule"`
+	Rules          []*Rule `toml:"rule"`
 }
 
 func NewConfigWithFile(name string) (*Config, error) {
@@ -55,8 +55,8 @@ func NewConfig(data string) (*Config, error) {
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	if c.MaxBulkItems == 0 {
-		c.MaxBulkItems = 500
+	if c.MaxBulkActions == 0 {
+		c.MaxBulkActions = 500
 	}
 	return &c, nil
 }

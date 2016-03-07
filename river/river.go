@@ -11,8 +11,8 @@ import (
 
 	"github.com/juju/errors"
 	"github.com/ehalpern/go-mysql/canal"
-	"github.com/ehalpern/go-mysql-elasticsearch/elastic"
 	"github.com/siddontang/go/log"
+	"gopkg.in/olivere/elastic.v3"
 	"os"
 	"strings"
 )
@@ -48,6 +48,13 @@ func NewRiver(c *Config) (*River, error) {
 		return nil, errors.Trace(err)
 	}
 
+	r.es, err = elastic.NewClient(elastic.SetURL("http://" + r.c.ESAddr))
+	if err != nil {
+		return nil, err
+	}
+
+	r.st = &stat{r: r}
+
 	if err = r.prepareCanal(); err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -57,9 +64,6 @@ func NewRiver(c *Config) (*River, error) {
 		return nil, errors.Trace(err)
 	}
 
-	r.es = elastic.NewClient(r.c.ESAddr)
-
-	r.st = &stat{r: r}
 	go r.st.Run(r.c.StatAddr)
 
 	return r, nil
@@ -105,9 +109,8 @@ func (r *River) prepareCanal() error {
 		r.canal.AddDumpDatabases(keys...)
 	}
 
-	h := rowsEventHandler{r, make([]*elastic.BulkRequest, 0, r.c.MaxBulkItems)}
-	log.Infof("Creating handler len: %d, cap: %d", len(h.bulkBuffer), cap(h.bulkBuffer))
-	r.canal.RegRowsEventHandler(&h)
+	s := syncer{r.st, r.rules, NewBulker(r.es, r.c.MaxBulkActions)}
+	r.canal.RegRowsEventHandler(&s)
 
 	return nil
 }
@@ -287,12 +290,14 @@ func (r *River) createIndexes() error {
 }
 
 func (r *River) createIndex(idx string, settings map[string]interface{}) error {
-	if r.es.IndexExists(idx) {
+	exists, err := r.es.IndexExists(idx).Do()
+	if exists {
 		log.Warnf("Index '%s' already exists; settings and mappings not updated", idx)
 		return nil
 	}
 	log.Infof("Creating index with settings from %v: %v", idx, settings)
-	return r.es.CreateIndex(idx, settings)
+	_, err = r.es.CreateIndex(idx).BodyJson(settings).Do()
+	return err
 }
 
 func (r *River) Run() error {

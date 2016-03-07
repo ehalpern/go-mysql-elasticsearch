@@ -1,15 +1,16 @@
 package river
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"testing"
 
-	"github.com/ehalpern/go-mysql-elasticsearch/elastic"
 	"github.com/ehalpern/go-mysql/client"
 	. "gopkg.in/check.v1"
 	"runtime/debug"
+	"gopkg.in/olivere/elastic.v3"
 )
 
 var my_addr = flag.String("my_host", "127.0.0.1:3306", "MySQL addr")
@@ -95,8 +96,7 @@ func (s *riverTestSuite) SetUpSuite(c *C) {
 	s.r, err = NewRiver(cfg)
 	c.Assert(err, IsNil)
 
-	err = s.r.es.DeleteIndex("river")
-	c.Assert(err, IsNil)
+	_, err = s.r.es.DeleteIndex("river").Do()
 }
 
 func (s *riverTestSuite) TearDownSuite(c *C) {
@@ -171,14 +171,15 @@ func (s *riverTestSuite) testPrepareData(c *C) {
 	}
 }
 
-func (s *riverTestSuite) testElasticGet(c *C, id string) *elastic.Response {
-	index := "river"
-	docType := "river"
-
-	r, err := s.r.es.Get(index, docType, id)
+func (s *riverTestSuite) testElasticGet(c *C, id string) (*elastic.GetResult, map[string]interface{}) {
+	resp, err := s.r.es.Get().Index("river").Type("river").Id(id).Do()
 	c.Assert(err, IsNil)
-
-	return r
+	bytes, err := resp.Source.MarshalJSON()
+	c.Assert(err, IsNil)
+	var source map[string]interface{}
+	err = json.Unmarshal(bytes, source)
+	c.Assert(err, IsNil)
+	return resp, source
 }
 
 func (s *riverTestSuite) testWaitSyncDone(c *C) {
@@ -193,19 +194,19 @@ func (s *riverTestSuite) TestRiver(c *C) {
 
 	<-s.r.canal.WaitDumpDone()
 
-	var r *elastic.Response
-	r = s.testElasticGet(c, "1")
+	r, source := s.testElasticGet(c, "1")
 	c.Assert(r.Found, Equals, true)
-	c.Assert(r.Source["tenum"], Equals, "e1")
-	c.Assert(r.Source["tset"], Equals, "a,b")
 
-	r = s.testElasticGet(c, "100")
+	c.Assert(source["tenum"], Equals, "e1")
+	c.Assert(source["tset"], Equals, "a,b")
+
+	r, _ = s.testElasticGet(c, "100")
 	c.Assert(r.Found, Equals, false)
 
 	for i := 0; i < 10; i++ {
-		r = s.testElasticGet(c, fmt.Sprintf("%d", 5+i))
+		r, source = s.testElasticGet(c, fmt.Sprintf("%d", 5+i))
 		c.Assert(r.Found, Equals, true)
-		c.Assert(r.Source["es_title"], Equals, "abc")
+		c.Assert(source["es_title"], Equals, "abc")
 	}
 
 	s.testExecute(c, "UPDATE test_river SET title = ?, tenum = ?, tset = ?, mylist = ? WHERE id = ?", "second 2", "e3", "a,b,c", "a,b,c", 2)
@@ -225,31 +226,31 @@ func (s *riverTestSuite) TestRiver(c *C) {
 
 	s.testWaitSyncDone(c)
 
-	r = s.testElasticGet(c, "1")
+	r, source = s.testElasticGet(c, "1")
 	c.Assert(r.Found, Equals, false)
 
-	r = s.testElasticGet(c, "2")
+	r, source = s.testElasticGet(c, "2")
 	c.Assert(r.Found, Equals, true)
-	c.Assert(r.Source["es_title"], Equals, "second 2")
-	c.Assert(r.Source["tenum"], Equals, "e3")
-	c.Assert(r.Source["tset"], Equals, "a,b,c")
-	c.Assert(r.Source["es_mylist"], DeepEquals, []interface{}{"a", "b", "c"})
+	c.Assert(source["es_title"], Equals, "second 2")
+	c.Assert(source["tenum"], Equals, "e3")
+	c.Assert(source["tset"], Equals, "a,b,c")
+	c.Assert(source["es_mylist"], DeepEquals, []interface{}{"a", "b", "c"})
 
-	r = s.testElasticGet(c, "4")
+	r, source = s.testElasticGet(c, "4")
 	c.Assert(r.Found, Equals, true)
-	c.Assert(r.Source["tenum"], Equals, "")
-	c.Assert(r.Source["tset"], Equals, "a,b,c")
+	c.Assert(source["tenum"], Equals, "")
+	c.Assert(source["tset"], Equals, "a,b,c")
 
-	r = s.testElasticGet(c, "3")
+	r, _ = s.testElasticGet(c, "3")
 	c.Assert(r.Found, Equals, false)
 
-	r = s.testElasticGet(c, "30")
+	r, source = s.testElasticGet(c, "30")
 	c.Assert(r.Found, Equals, true)
-	c.Assert(r.Source["es_title"], Equals, "second 30")
+	c.Assert(source["es_title"], Equals, "second 30")
 
 	for i := 0; i < 10; i++ {
-		r = s.testElasticGet(c, fmt.Sprintf("%d", 5+i))
+		r, source = s.testElasticGet(c, fmt.Sprintf("%d", 5+i))
 		c.Assert(r.Found, Equals, true)
-		c.Assert(r.Source["es_title"], Equals, "hello")
+		c.Assert(source["es_title"], Equals, "hello")
 	}
 }

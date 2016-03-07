@@ -2,6 +2,10 @@ package river
 
 import (
 	"github.com/ehalpern/go-mysql/schema"
+"github.com/juju/errors"
+	"fmt"
+"github.com/ehalpern/go-mysql/canal"
+	"bytes"
 )
 
 // If you want to sync MySQL data into elasticsearch, you must set a rule to let use know how to do it.
@@ -51,3 +55,36 @@ func (r *Rule) prepare() error {
 
 	return nil
 }
+
+// Returns a doc id synthesized by concatenating all primary key values in the row.
+// The resulting id will have the form pk1[:pk2[...]]
+func (r *Rule) DocId(row []interface{}) (string, error) {
+	pks, err := canal.GetPKValues(r.TableInfo, row)
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+
+	sep := ""
+	for i, value := range pks {
+		if value == nil {
+			return "", errors.Errorf("The %ds PK value is nil", i)
+		}
+
+		buf.WriteString(fmt.Sprintf("%s%v", sep, value))
+		sep = ":"
+	}
+
+	return buf.String(), nil
+}
+
+
+func (r *Rule) ParentId(row []interface{}) (string, error) {
+	index := r.TableInfo.FindColumn(r.Parent)
+	if index < 0 {
+		return "", errors.Errorf("parent id not found %s(%s)", r.TableInfo.Name, r.Parent)
+	}
+	return fmt.Sprint(row[index]), nil
+}
+

@@ -2,8 +2,6 @@ package river
 
 import (
 	"fmt"
-	"net/http"
-	"net/url"
 	"os"
 
 	. "gopkg.in/check.v1"
@@ -70,7 +68,7 @@ func (s *riverTestSuite) setupExtra(c *C) (r *River) {
 		},
 	}
 
-	r.es.CreateMapping("river", "river_extra", mapping)
+	r.es.PutMapping().Index("river").Type("river_extra").BodyJson(mapping)
 
 	return r
 }
@@ -84,23 +82,8 @@ func (s *riverTestSuite) testPrepareExtraData(c *C) {
 }
 
 func (s *riverTestSuite) testElasticExtraExists(c *C, id string, parent string, exist bool) {
-	index := "river"
-	docType := "river_extra"
-
-	reqUrl := fmt.Sprintf("http://%s/%s/%s/%s?parent=%s", s.r.es.Addr,
-		url.QueryEscape(index),
-		url.QueryEscape(docType),
-		url.QueryEscape(id),
-		url.QueryEscape(parent))
-
-	r, err := s.r.es.Do("HEAD", reqUrl, nil)
-	c.Assert(err, IsNil)
-
-	if exist {
-		c.Assert(r.Code, Equals, http.StatusOK)
-	} else {
-		c.Assert(r.Code, Equals, http.StatusNotFound)
-	}
+	exists, _ := s.r.es.Exists().Index("river").Type("river_extra").Parent(parent).Id(id).Do()
+	c.Assert(exists, Equals, true)
 }
 
 func (s *riverTestSuite) TestRiverWithParent(c *C) {
