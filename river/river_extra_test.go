@@ -68,7 +68,7 @@ func (s *riverTestSuite) setupExtra(c *C) (r *River) {
 		},
 	}
 
-	r.es.PutMapping().Index("river").Type("river_extra").BodyJson(mapping)
+	r.es.PutMapping().Index("river").Type("river_extra").BodyJson(mapping).Do()
 
 	return r
 }
@@ -83,10 +83,10 @@ func (s *riverTestSuite) testPrepareExtraData(c *C) {
 
 func (s *riverTestSuite) testElasticExtraExists(c *C, id string, parent string, exist bool) {
 	exists, _ := s.r.es.Exists().Index("river").Type("river_extra").Parent(parent).Id(id).Do()
-	c.Assert(exists, Equals, true)
+	c.Assert(exists, Equals, exist)
 }
 
-func (s *riverTestSuite) IgnoreTestRiverWithParent(c *C) {
+func (s *riverTestSuite) TestRiverWithParent(c *C) {
 	river := s.setupExtra(c)
 
 	defer river.Close()
