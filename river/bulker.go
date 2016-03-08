@@ -35,14 +35,9 @@ func (b *Bulker) Count() int {
 }
 
 // Adds actions to be submitted in the next request. If adding these actions causes
-// Count to exceed MaxActions, auto-submits the current batch by calling Submit.
+// count to exceed MaxActions, auto-submits the current batch by calling Submit.
 func (b *Bulker) Add(actions []elastic.BulkableRequest) error {
-	if b.bulker.NumberOfActions() + len(actions) > b.MaxActions {
-		b.Submit()
-	}
-	if (b.LastError != nil) {
-		return b.LastError
-	}
+
 	for _, req := range actions {
 		switch req.(type) {
 		case *elastic.BulkDeleteRequest:
@@ -55,19 +50,26 @@ func (b *Bulker) Add(actions []elastic.BulkableRequest) error {
 		b.Stats.Total++
 		b.bulker.Add(req)
 	}
-	return nil
+
+	if (b.bulker.NumberOfActions() >= b.MaxActions) {
+		b.Submit()
+	}
+	return b.LastError
 }
 
-// Submit submits the current batch of actions in bulk and resets Count to 0.
-func (b *Bulker) Submit() (*elastic.BulkResponse, error) {
-	size := b.bulker.NumberOfActions()
-	log.Infof("Submitting bulk update of %d/%d to elasticsearch", size, b.MaxActions)
 
+
+// Submit submits the current batch of actions in bulk and resets Count to 0.
+func (b *Bulker) Submit() error {
+	size := b.bulker.NumberOfActions()
+	if (size == 0) {
+		return nil
+	}
 	b.LastResponse, b.LastError = b.bulker.Do()
 	if b.LastError != nil {
-		log.Infof("Bulk update failed due to %v", b.LastError)
-		return nil, b.LastError
+		log.Infof("Bulk update %d/%d failed due to %v", size, b.MaxActions, b.LastError)
+		return b.LastError
 	}
-	log.Infof("Bulk update succeeded with %d actions: %v", size, b.LastResponse)
-	return b.LastResponse, b.LastError
+	log.Infof("Bulk update %d/%d succeeded", size, b.MaxActions)
+	return b.LastError
 }

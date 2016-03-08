@@ -86,7 +86,7 @@ func (s *riverTestSuite) testElasticExtraExists(c *C, id string, parent string, 
 	c.Assert(exists, Equals, true)
 }
 
-func (s *riverTestSuite) TestRiverWithParent(c *C) {
+func (s *riverTestSuite) IgnoreTestRiverWithParent(c *C) {
 	river := s.setupExtra(c)
 
 	defer river.Close()

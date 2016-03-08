@@ -35,11 +35,11 @@ func Convert(rules map[string]*Rule, e *canal.RowsEvent) ([]elastic.BulkableRequ
 	case canal.UpdateAction:
 		reqs, err = convertUpdate(rule, e.Rows)
 	default:
-		return nil, errors.Errorf("unrecognized action action %s", e.Action)
+		return nil, errors.Errorf("Unrecognized action action %s", e.Action)
 	}
 
 	if err != nil {
-		return nil, errors.Errorf("error adding %s to bulk request: %v", e.Action, err)
+		return nil, errors.Errorf("Error adding %s to bulk request: %v", e.Action, err)
 	}
 
 	return reqs, nil
@@ -119,6 +119,7 @@ func convertUpdate(rule *Rule, rows [][]interface{}) ([]elastic.BulkableRequest,
 		req = elastic.NewBulkUpdateRequest().Index(rule.Index).Type(rule.Type).Parent(beforeParentID).Id(beforeID)
 
 		if beforeID != afterID || beforeParentID != afterParentID {
+			// if an id is changing, delete the old document and insert a new one
 			req = elastic.NewBulkDeleteRequest().Index(rule.Index).Type(rule.Type).Id(beforeID)
 			reqs = append(reqs, req)
 			temp, err := convertInsert(rule, [][]interface{}{rows[i+1]})
@@ -129,7 +130,6 @@ func convertUpdate(rule *Rule, rows [][]interface{}) ([]elastic.BulkableRequest,
 			doc := convertUpdateRow(rule, rows[i], rows[i+1])
 			req = elastic.NewBulkUpdateRequest().Index(rule.Index).Type(rule.Type).Parent(beforeParentID).Id(beforeID).Doc(doc)
 		}
-
 		reqs = append(reqs, req)
 	}
 
@@ -221,7 +221,6 @@ func convertRow(rule *Rule, values []interface{}) map[string]interface{} {
 
 func convertUpdateRow(rule *Rule, before []interface{}, after []interface{}) map[string]interface{} {
 	doc := make(map[string]interface{}, len(before))
-
 	for i, c := range rule.TableInfo.Columns {
 		mapped := false
 		if reflect.DeepEqual(before[i], after[i]) {
@@ -232,7 +231,6 @@ func convertUpdateRow(rule *Rule, before []interface{}, after []interface{}) map
 			mysql, elastic, fieldType := fieldMappingParts(k, v)
 			if mysql == c.Name {
 				mapped = true
-				// has custom field mapping
 				v := convertColumnData(&c, after[i])
 				str, ok := v.(string)
 				if ok == false {
@@ -249,7 +247,6 @@ func convertUpdateRow(rule *Rule, before []interface{}, after []interface{}) map
 		if mapped == false {
 			doc[c.Name] = convertColumnData(&c, after[i])
 		}
-		return doc
 	}
 	return doc
 }

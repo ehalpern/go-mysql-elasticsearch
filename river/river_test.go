@@ -31,7 +31,7 @@ type riverTestSuite struct {
 var _ = Suite(&riverTestSuite{})
 
 func (s *riverTestSuite) SetUpSuite(c *C) {
-	debug.SetTraceback("single")
+	debug.SetTraceback("all")
 	var err error
 	s.c, err = client.Connect(*my_addr, *my_user, *my_pass, "test")
 	c.Assert(err, IsNil)
@@ -172,12 +172,15 @@ func (s *riverTestSuite) testPrepareData(c *C) {
 }
 
 func (s *riverTestSuite) testElasticGet(c *C, id string) (*elastic.GetResult, map[string]interface{}) {
+	var source map[string]interface{}
 	resp, err := s.r.es.Get().Index("river").Type("river").Id(id).Do()
+	if elastic.IsNotFound(err) {
+		return resp, nil
+	}
 	c.Assert(err, IsNil)
 	bytes, err := resp.Source.MarshalJSON()
 	c.Assert(err, IsNil)
-	var source map[string]interface{}
-	err = json.Unmarshal(bytes, source)
+	err = json.Unmarshal(bytes, &source)
 	c.Assert(err, IsNil)
 	return resp, source
 }
@@ -192,7 +195,9 @@ func (s *riverTestSuite) TestRiver(c *C) {
 
 	go s.r.Run()
 
+	c.Logf("Waiting for dump to complete")
 	<-s.r.canal.WaitDumpDone()
+	c.Logf("Dump completed")
 
 	r, source := s.testElasticGet(c, "1")
 	c.Assert(r.Found, Equals, true)
@@ -200,8 +205,8 @@ func (s *riverTestSuite) TestRiver(c *C) {
 	c.Assert(source["tenum"], Equals, "e1")
 	c.Assert(source["tset"], Equals, "a,b")
 
-	r, _ = s.testElasticGet(c, "100")
-	c.Assert(r.Found, Equals, false)
+	r, doc := s.testElasticGet(c, "100")
+	c.Assert(doc, IsNil)
 
 	for i := 0; i < 10; i++ {
 		r, source = s.testElasticGet(c, fmt.Sprintf("%d", 5+i))
@@ -224,10 +229,12 @@ func (s *riverTestSuite) TestRiver(c *C) {
 		s.testExecute(c, fmt.Sprintf("UPDATE %s SET title = ? WHERE id = ?", table), "hello", 5+i)
 	}
 
+	c.Logf("Waiting for sync to complete")
 	s.testWaitSyncDone(c)
+	c.Logf("Sync completed")
 
 	r, source = s.testElasticGet(c, "1")
-	c.Assert(r.Found, Equals, false)
+	c.Assert(source, IsNil)
 
 	r, source = s.testElasticGet(c, "2")
 	c.Assert(r.Found, Equals, true)
@@ -241,8 +248,8 @@ func (s *riverTestSuite) TestRiver(c *C) {
 	c.Assert(source["tenum"], Equals, "")
 	c.Assert(source["tset"], Equals, "a,b,c")
 
-	r, _ = s.testElasticGet(c, "3")
-	c.Assert(r.Found, Equals, false)
+	r, source = s.testElasticGet(c, "3")
+	c.Assert(source, IsNil)
 
 	r, source = s.testElasticGet(c, "30")
 	c.Assert(r.Found, Equals, true)

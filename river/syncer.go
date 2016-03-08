@@ -24,7 +24,7 @@ func (s *syncer) Do(e *canal.RowsEvent) error {
 }
 
 func (s *syncer) Complete() error {
-	_, err := s.bulker.Submit()
+	err := s.bulker.Submit()
 	if err != nil {
 		return errors.Wrap(err, canal.ErrHandleInterrupted)
 	}

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-
+	//stdlog "log"
 	"path/filepath"
 	"regexp"
 	"sync"
@@ -48,7 +48,10 @@ func NewRiver(c *Config) (*River, error) {
 		return nil, errors.Trace(err)
 	}
 
-	r.es, err = elastic.NewClient(elastic.SetURL("http://" + r.c.ESAddr))
+	r.es, err = elastic.NewClient(
+		elastic.SetURL("http://" + r.c.ESAddr),
+		//elastic.SetTraceLog(stdlog.New(os.Stdout, "", 0)),
+	)
 	if err != nil {
 		return nil, err
 	}
