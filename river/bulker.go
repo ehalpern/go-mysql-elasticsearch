@@ -1,7 +1,11 @@
 package river
 
 import (
+	"bytes"
+	"fmt"
+
 	"gopkg.in/olivere/elastic.v3"
+	"github.com/juju/errors"
 	"github.com/siddontang/go/log"
 )
 
@@ -68,9 +72,27 @@ func (b *Bulker) Submit() error {
 	}
 	b.LastResponse, b.LastError = b.bulker.Do()
 	if b.LastError != nil {
-		log.Infof("Bulk update %d/%d failed due to %v", size, b.MaxActions, b.LastError)
+		log.Errorf("Bulk update %d/%d failed due to %v", size, b.MaxActions, b.LastError)
 		return b.LastError
 	}
-	log.Infof("Bulk update %d/%d succeeded", size, b.MaxActions)
+	if b.LastResponse.Errors {
+		var buffer bytes.Buffer
+		failed := b.LastResponse.Failed()
+		count := len(failed)
+		buffer.WriteString(fmt.Sprintf("%v actions failed in bulk update:\n", count))
+		for i, er := range failed {
+			buffer.WriteString(fmt.Sprintf("\t%v:%v\n", er, er.Error))
+			if i == 2 {
+				if count > 3 {
+					buffer.WriteString(fmt.Sprintf("\t...\n"))
+				}
+				break;
+			}
+		}
+		log.Errorf(buffer.String())
+		b.LastError = errors.Errorf("%v actions failed during bulk update", count)
+	} else {
+		log.Infof("Bulk update %d/%d succeeded", size, b.MaxActions)
+	}
 	return b.LastError
 }

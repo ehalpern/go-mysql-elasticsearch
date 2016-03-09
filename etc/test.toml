@@ -22,7 +22,7 @@ flavor = "mysql"
 # mysqldump execution path
 mysqldump = "mydumper"
 
-max_bulk_items = 5
+max_bulk_actions = 10
 
 # MySQL data source
 [[source]]

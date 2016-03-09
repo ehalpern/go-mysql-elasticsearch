@@ -14,6 +14,9 @@
         }
       }],
       "properties": {
+        "money_network": {
+          "type": "string", "index": "no"
+        },
         "money_network_corp": {
           "type": "string", "index": "no"
         },

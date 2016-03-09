@@ -22,6 +22,9 @@ flavor = "mysql"
 # mysqldump execution path
 mysqldump = "mydumper"
 
+# number of bulk actions
+max_actions = 500
+
 # MySQL data source
 [[source]]
 schema = "cfdb"

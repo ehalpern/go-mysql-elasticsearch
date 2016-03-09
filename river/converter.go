@@ -174,79 +174,59 @@ func convertColumnData(col *schema.TableColumn, value interface{}) interface{} {
 	return value
 }
 
-func fieldMappingParts(k string, v string) (string, string, string) {
-	composedField := strings.Split(v, ",")
-
-	mysql := k
-	elastic := composedField[0]
-	fieldType := ""
-
-	if 0 == len(elastic) {
-		elastic = mysql
-	}
-	if 2 == len(composedField) {
-		fieldType = composedField[1]
-	}
-
-	return mysql, elastic, fieldType
-}
 
 func convertRow(rule *Rule, values []interface{}) map[string]interface{} {
-	valueMap := make(map[string]interface{}, len(values))
+	doc := make(map[string]interface{}, len(values))
 
 	for i, c := range rule.TableInfo.Columns {
-		mapped := false
-		for k, v := range rule.FieldMapping {
-			mysql, elastic, fieldType := fieldMappingParts(k, v)
-			if mysql == c.Name {
-				mapped = true
-				v := convertColumnData(&c, values[i])
-				if fieldType == fieldTypeList {
-					if str, ok := v.(string); ok {
-						valueMap[elastic] = strings.Split(str, ",")
-					} else {
-						valueMap[elastic] = v
-					}
-				} else {
-					valueMap[elastic] = v
-				}
-			}
-		}
-		if mapped == false {
-			valueMap[c.Name] = convertColumnData(&c, values[i])
-		}
+		fname, value := convertField(rule, &c, values[i])
+		doc[fname] = value
 	}
-	return valueMap
+	return doc
 }
 
 func convertUpdateRow(rule *Rule, before []interface{}, after []interface{}) map[string]interface{} {
 	doc := make(map[string]interface{}, len(before))
 	for i, c := range rule.TableInfo.Columns {
-		mapped := false
-		if reflect.DeepEqual(before[i], after[i]) {
-			//nothing changed
-			continue
-		}
-		for k, v := range rule.FieldMapping {
-			mysql, elastic, fieldType := fieldMappingParts(k, v)
-			if mysql == c.Name {
-				mapped = true
-				v := convertColumnData(&c, after[i])
-				str, ok := v.(string)
-				if ok == false {
-					doc[c.Name] = v
-				} else {
-					if fieldType == fieldTypeList {
-						doc[elastic] = strings.Split(str, ",")
-					} else {
-						doc[elastic] = str
-					}
-				}
-			}
-		}
-		if mapped == false {
-			doc[c.Name] = convertColumnData(&c, after[i])
+		if !reflect.DeepEqual(before[i], after[i]) {
+			field, value := convertField(rule, &c, after[i])
+			doc[field] = value
 		}
 	}
 	return doc
 }
+
+func convertField(rule *Rule, column *schema.TableColumn, value interface{}) (string, interface{}) {
+	v := convertColumnData(column, value)
+	for cname, s := range rule.FieldMapping {
+		if cname == column.Name {
+			fname, ftype := parseFieldMapping(cname, s)
+			str, ok := v.(string)
+			if ok == false {
+				return cname, v
+			} else if ftype == fieldTypeList {
+				return fname, strings.Split(str, ",")
+			} else {
+				return fname, str
+			}
+		}
+	}
+	return column.Name, v
+}
+
+func parseFieldMapping(cname string, value string) (string, string) {
+	fname := cname
+	ftype := ""
+
+	split := strings.Split(value, ",")
+
+	if (split[0] != "") {
+		fname = split[0]
+	}
+	if len(split) == 2 {
+		ftype = split[1]
+	}
+
+	return fname, ftype
+}
+

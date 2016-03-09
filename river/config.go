@@ -29,7 +29,7 @@ type Config struct {
 	DumpExec       string `toml:"mysqldump"`
 
 	Sources        []SourceConfig `toml:"source"`
-	MaxBulkActions int `toml:"max_bulk_items"`
+	MaxBulkActions int `toml:"max_actions"`
 
 	Rules          []*Rule `toml:"rule"`
 }
@@ -56,7 +56,7 @@ func NewConfig(data string) (*Config, error) {
 		return nil, errors.Trace(err)
 	}
 	if c.MaxBulkActions == 0 {
-		c.MaxBulkActions = 500
+		c.MaxBulkActions = 1
 	}
 	return &c, nil
 }
