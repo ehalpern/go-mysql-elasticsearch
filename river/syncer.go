@@ -3,6 +3,7 @@ package river
 import (
 	"github.com/juju/errors"
 	"github.com/ehalpern/go-mysql/canal"
+"github.com/siddontang/go/log"
 )
 
 type syncer struct {
@@ -18,7 +19,8 @@ func (s *syncer) Do(e *canal.RowsEvent) error {
 		err = s.bulker.Add(actions)
 	}
 	if err != nil {
-		return errors.Wrap(err, canal.ErrHandleInterrupted)
+		log.Errorf("Handler failing due to %v", err)
+		return canal.ErrHandleInterrupted
 	}
 	return nil
 }

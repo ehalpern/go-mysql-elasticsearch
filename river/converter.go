@@ -169,8 +169,12 @@ func convertColumnData(col *schema.TableColumn, value interface{}) interface{} {
 		case []byte:
 			return string(value[:])
 		}
+	case schema.TYPE_FLOAT:
+		switch value := value.(type) {
+		case int64:
+			return float64(value)
+		}
 	}
-
 	return value
 }
 
