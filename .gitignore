@@ -1,2 +1,5 @@
 .idea
 *.iml
+etc2/
+bin/
+var/
