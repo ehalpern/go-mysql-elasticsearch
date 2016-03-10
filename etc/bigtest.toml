@@ -1,0 +1,29 @@
+my_addr = "db.core-data.crowdpac.com:3306"
+my_user = "cproot"
+my_pass = "mpu9v92U7n4U7PqQ"
+
+es_addr = "127.0.0.1:9200"
+data_dir = "./var"
+stat_addr = "127.0.0.1:12800"
+server_id = 1001
+flavor = "mysql"
+mysqldump = "mydumper"
+
+[[source]]
+schema = "cfdb"
+
+tables = ["cand_db" ]
+
+[[rule]]
+schema = "cfdb"
+table = "cand_db"
+index = "cand_db"
+indexFile = "cand_db.idx.json"
+type = "cand_db"
+
+#[[rule]]
+#schema = "cfdb"
+#table = "newconts"
+#index = "newconts"
+#indexFile = "newconts.idx.json"
+#type = "newconts"
