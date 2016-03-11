@@ -12,17 +12,26 @@ type syncer struct {
 	bulker *Bulker
 }
 
-
 func (s *syncer) Do(e *canal.RowsEvent) error {
-	actions, err := Convert(s.rules, e)
-	if err == nil {
-		err = s.bulker.Add(actions)
-	}
-	if err != nil {
-		log.Errorf("Handler failing due to %v", err)
-		return canal.ErrHandleInterrupted
+	if !s.ignoreEvent(e) {
+		actions, err := Convert(s.rules, e)
+		if err == nil {
+			err = s.bulker.Add(actions)
+		}
+		if err != nil {
+			log.Errorf("Handler failing due to %v", err)
+			return canal.ErrHandleInterrupted
+		}
 	}
 	return nil
+}
+
+func (s *syncer) ignoreEvent(e *canal.RowsEvent) bool {
+	_, ok := s.rules[ruleKey(e.Table.Schema, e.Table.Name)]
+	if !ok {
+		log.Debugf("Ignoring event for table not configured for replication: %v", ruleKey(e.Table.Schema, e.Table.Name))
+	}
+	return !ok
 }
 
 func (s *syncer) Complete() error {

@@ -12,6 +12,10 @@ import (
 	"gopkg.in/olivere/elastic.v3"
 )
 
+var (
+	ErrIgnoredEvent = errors.New("ignoring event for unexpected database or table")
+)
+
 const (
 	fieldTypeList = "list"
 )

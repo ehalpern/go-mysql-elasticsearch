@@ -39,24 +39,10 @@ func (s *riverTestSuite) SetUpSuite(c *C) {
 		s.testExecute(c, "SET SESSION binlog_format = 'ROW'")
 	}
 
-	schema := `
-        CREATE TABLE IF NOT EXISTS %s (
-            id INT,
-            title VARCHAR(256),
-            content VARCHAR(256),
-            mylist VARCHAR(256),
-            tenum ENUM("e1", "e2", "e3"),
-            tset SET("a", "b", "c"),
-            PRIMARY KEY(id)) ENGINE=INNODB;
-    `
-
-	s.testExecute(c, "DROP TABLE IF EXISTS test_river")
-	s.testExecute(c, fmt.Sprintf(schema, "test_river"))
-
+	s.setupTestTable(c, "test", "test_river")
 	for i := 0; i < 10; i++ {
 		table := fmt.Sprintf("test_river_%04d", i)
-		s.testExecute(c, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
-		s.testExecute(c, fmt.Sprintf(schema, table))
+		s.setupTestTable(c, "test", table)
 	}
 
 	cfg := new(Config)
@@ -97,6 +83,24 @@ func (s *riverTestSuite) SetUpSuite(c *C) {
 	c.Assert(err, IsNil)
 
 	_, err = s.r.es.DeleteIndex("river").Do()
+}
+
+func (s *riverTestSuite) setupTestTable(c *C, dbName string, tableName string) {
+	s.testExecute(c, "CREATE DATABASE IF NOT EXISTS " + dbName)
+	fullName := dbName + "." + tableName
+	schema := fmt.Sprintf(`
+        CREATE TABLE IF NOT EXISTS %s (
+            id INT,
+            title VARCHAR(256),
+            content VARCHAR(256),
+            mylist VARCHAR(256),
+            tenum ENUM("e1", "e2", "e3"),
+            tset SET("a", "b", "c"),
+            PRIMARY KEY(id)) ENGINE=INNODB;`, fullName)
+
+	s.testExecute(c, "CREATE DATABASE IF NOT EXISTS " + dbName)
+	s.testExecute(c, "DROP TABLE IF EXISTS " + fullName)
+	s.testExecute(c, schema)
 }
 
 func (s *riverTestSuite) TearDownSuite(c *C) {

@@ -17,18 +17,17 @@ func (s *riverTestSuite) setupExtra(c *C) (r *River) {
             pid INT,
             PRIMARY KEY(id)) ENGINE=INNODB;
     `
-
-	s.testExecute(c, "DROP TABLE IF EXISTS test_river_extra")
-	s.testExecute(c, fmt.Sprintf(schema, "test_river_extra"))
+	s.testPrepareTable(c, "test", "test_river_extra", schema)
 
 	schema = `
         CREATE TABLE IF NOT EXISTS %s (
             id INT,
             PRIMARY KEY(id)) ENGINE=INNODB;
     `
+	s.testPrepareTable(c, "test", "test_river_parent", schema)
 
-	s.testExecute(c, "DROP TABLE IF EXISTS test_river_parent")
-	s.testExecute(c, fmt.Sprintf(schema, "test_river_parent"))
+	s.testPrepareTable(c, "test_ignore", "test_river", schema)
+	s.testPrepareTable(c, "test", "test_river_ignore", schema)
 
 	cfg := new(Config)
 	cfg.MyAddr = *my_addr
@@ -73,6 +72,13 @@ func (s *riverTestSuite) setupExtra(c *C) (r *River) {
 	return r
 }
 
+func (s *riverTestSuite) testPrepareTable(c *C, db string, table string, schema string) {
+	fullName := db + "." + table
+	s.testExecute(c, "CREATE DATABASE IF NOT EXISTS " + db)
+	s.testExecute(c, "DROP TABLE IF EXISTS " + fullName)
+	s.testExecute(c, fmt.Sprintf(schema, fullName))
+}
+
 func (s *riverTestSuite) testPrepareExtraData(c *C) {
 	s.testExecute(c, "INSERT INTO test_river_parent (id) VALUES (?)", 1)
 	s.testExecute(c, "INSERT INTO test_river_extra (id, title, pid) VALUES (?, ?, ?)", 1, "first", 1)
@@ -98,6 +104,10 @@ func (s *riverTestSuite) TestRiverWithParent(c *C) {
 	<-river.canal.WaitDumpDone()
 
 	s.testElasticExtraExists(c, "1", "1", true)
+
+	// Make sure inserting into ignored tables doesn't break anything
+	s.testExecute(c, "INSERT INTO test_ignore.test_river (id) VALUES (?)", 1)
+	s.testExecute(c, "INSERT INTO test.test_river_ignore (id) VALUES (?)", 1)
 
 	s.testExecute(c, "DELETE FROM test_river_extra WHERE id = ?", 1)
 	err := river.canal.CatchMasterPos(1)
