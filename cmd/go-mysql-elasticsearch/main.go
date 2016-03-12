@@ -21,7 +21,7 @@ var data_dir = flag.String("data_dir", "", "path for go-mysql-elasticsearch to s
 var server_id = flag.Int("server_id", 0, "MySQL server id, as a pseudo slave")
 var flavor = flag.String("flavor", "", "flavor: mysql or mariadb")
 var execution = flag.String("exec", "", "mysqldump execution path")
-var max_actions = flag.Int("max_actions", 0, "number of actions to include in an elasticsearch bulk update")
+var max_actions = flag.Int("max_actions", 500, "number of actions to include in an elasticsearch bulk update")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
