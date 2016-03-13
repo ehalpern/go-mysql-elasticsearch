@@ -499,7 +499,7 @@ func (b *BinlogSyncer) onStream(s *BinlogStreamer) {
 			s.closeWithError(err)
 			return
 		}
-		log.Infof("Packet read")
+		log.Debugf("Packet read")
 
 		switch data[0] {
 		case OK_HEADER:
