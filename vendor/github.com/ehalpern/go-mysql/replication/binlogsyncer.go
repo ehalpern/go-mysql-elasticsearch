@@ -11,6 +11,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/ehalpern/go-mysql/client"
 	. "github.com/ehalpern/go-mysql/mysql"
+	"github.com/siddontang/go/log"
 )
 
 var (
@@ -491,19 +492,24 @@ func (b *BinlogSyncer) onStream(s *BinlogStreamer) {
 	}()
 
 	for {
+		log.Debugf("Reading next packet")
 		data, err := b.c.ReadPacket()
 		if err != nil {
+			log.Debugf("Reading next packet failed; shutting down")
 			s.closeWithError(err)
 			return
 		}
+		log.Infof("Packet read")
 
 		switch data[0] {
 		case OK_HEADER:
+			log.Debugf("found OK_HEADER")
 			if err = b.parseEvent(s, data); err != nil {
 				s.closeWithError(err)
 				return
 			}
 		case ERR_HEADER:
+			log.Debugf("found ERR_HEADER")
 			err = b.c.HandleErrorPacket(data)
 			s.closeWithError(err)
 			return

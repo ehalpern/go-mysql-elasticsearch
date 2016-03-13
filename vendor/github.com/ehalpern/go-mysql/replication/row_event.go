@@ -12,6 +12,7 @@ import (
 	"github.com/juju/errors"
 	. "github.com/ehalpern/go-mysql/mysql"
 	"github.com/siddontang/go/hack"
+	"github.com/siddontang/go/log"
 )
 
 type TableMapEvent struct {
@@ -270,7 +271,6 @@ func (e *RowsEvent) Decode(data []byte) error {
 			pos += n
 		}
 	}
-
 	return nil
 }
 
@@ -304,7 +304,7 @@ func (e *RowsEvent) decodeRows(data []byte, table *TableMapEvent, bitmap []byte)
 		row[i], n, err = e.decodeValue(data[pos:], table.ColumnType[i], table.ColumnMeta[i])
 
 		if err != nil {
-			return 0, nil
+			return 0, err
 		}
 		pos += n
 
@@ -318,7 +318,7 @@ func (e *RowsEvent) decodeRows(data []byte, table *TableMapEvent, bitmap []byte)
 // see mysql sql/log_event.cc log_event_print_value
 func (e *RowsEvent) decodeValue(data []byte, tp byte, meta uint16) (v interface{}, n int, err error) {
 	var length int = 0
-
+	log.Debugf("Decode: t:%d, m:%d, l:%d", tp, meta, len(data))
 	if tp == MYSQL_TYPE_STRING {
 		if meta >= 256 {
 			b0 := uint8(meta >> 8)
@@ -434,7 +434,11 @@ func (e *RowsEvent) decodeValue(data []byte, tp byte, meta uint16) (v interface{
 		n = int(nbits+7) / 8
 
 		v, err = decodeBit(data, int(nbits), n)
-	case MYSQL_TYPE_BLOB:
+	case MYSQL_TYPE_BLOB, MYSQL_TYPE_GEOMETRY:
+	// Warning: GEOMETRY seems to be stored using that same format as blob.
+	// This was determined by reverse engineering rather than inpecting
+	// the MySQL source. This is known to work for MYSQL >= 5.6
+	// where meta == 4, but hasn't been tested on other versions.
 		switch meta {
 		case 1:
 			length = int(data[0])
@@ -455,8 +459,7 @@ func (e *RowsEvent) decodeValue(data []byte, tp byte, meta uint16) (v interface{
 		default:
 			err = fmt.Errorf("invalid blob packlen = %d", meta)
 		}
-	case MYSQL_TYPE_VARCHAR,
-		MYSQL_TYPE_VAR_STRING:
+	case MYSQL_TYPE_VARCHAR, MYSQL_TYPE_VAR_STRING:
 		length = int(meta)
 		v, n = decodeString(data, length)
 	case MYSQL_TYPE_STRING:

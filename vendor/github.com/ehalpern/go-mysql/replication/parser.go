@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/juju/errors"
+    "github.com/siddontang/go/log"
 )
 
 type BinlogParser struct {
@@ -185,9 +186,12 @@ func (p *BinlogParser) parseEvent(h *EventHeader, data []byte) (Event, error) {
 		}
 	}
 
+	log.Debugf("parser decoding %v", h.EventType)
 	if err := e.Decode(data); err != nil {
+		log.Debugf("parser decoding %v failed %v", h.EventType, err)
 		return nil, &EventError{h, err.Error(), data}
 	}
+	log.Debugf("parser decoding %v succeeded %+v", h.EventType, e)
 
 	if te, ok := e.(*TableMapEvent); ok {
 		p.tables[te.TableID] = te
@@ -206,8 +210,8 @@ func (p *BinlogParser) parseEvent(h *EventHeader, data []byte) (Event, error) {
 
 func (p *BinlogParser) parse(data []byte) (*BinlogEvent, error) {
 	rawData := data
-
 	h, err := p.parseHeader(data)
+	log.Debugf("parser.parse: header: %+v", h)
 
 	if err != nil {
 		return nil, err
@@ -221,6 +225,7 @@ func (p *BinlogParser) parse(data []byte) (*BinlogEvent, error) {
 	}
 
 	e, err := p.parseEvent(h, data)
+	log.Debugf("parser.parse: event: %+v", e)
 	if err != nil {
 		return nil, err
 	}

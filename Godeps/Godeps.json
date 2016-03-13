@@ -13,31 +13,31 @@
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/canal",
-			"Rev": "f259cdb68816aa5d49799b005e61b6b5c0685bf2"
+			"Rev": "d9964dd44aa35673bec7e2afc010c6aac5a35564"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/client",
-			"Rev": "f259cdb68816aa5d49799b005e61b6b5c0685bf2"
+			"Rev": "d9964dd44aa35673bec7e2afc010c6aac5a35564"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/dump",
-			"Rev": "f259cdb68816aa5d49799b005e61b6b5c0685bf2"
+			"Rev": "d9964dd44aa35673bec7e2afc010c6aac5a35564"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/mysql",
-			"Rev": "f259cdb68816aa5d49799b005e61b6b5c0685bf2"
+			"Rev": "d9964dd44aa35673bec7e2afc010c6aac5a35564"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/packet",
-			"Rev": "f259cdb68816aa5d49799b005e61b6b5c0685bf2"
+			"Rev": "d9964dd44aa35673bec7e2afc010c6aac5a35564"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/replication",
-			"Rev": "f259cdb68816aa5d49799b005e61b6b5c0685bf2"
+			"Rev": "d9964dd44aa35673bec7e2afc010c6aac5a35564"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/schema",
-			"Rev": "f259cdb68816aa5d49799b005e61b6b5c0685bf2"
+			"Rev": "d9964dd44aa35673bec7e2afc010c6aac5a35564"
 		},
 		{
 			"ImportPath": "github.com/juju/errors",
