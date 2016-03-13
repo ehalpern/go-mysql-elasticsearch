@@ -53,7 +53,7 @@ func (b *Bulker) Add(actions []elastic.BulkableRequest) error {
 		}
 		b.Stats.Total++
 		b.bulker.Add(req)
-		log.Infof("Adding %v", req)
+		log.Debugf("Adding %v", req)
 	}
 
 	if (b.bulker.NumberOfActions() >= b.MaxActions) {
