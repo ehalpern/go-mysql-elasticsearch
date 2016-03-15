@@ -140,6 +140,7 @@ At the above example, if you have 1024 sub tables, all tables will be synced int
 ## Todo
 
 + Improved logging including per table statistics summaries and log file control
++ Handle schema updates in replication stream
 + Provide support for index auto-versioning so a new index can be ingested without
   interfering with the running index
 + Better documentation and examples for creating mappings
