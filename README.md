@@ -137,15 +137,6 @@ type = "river"
 
 At the above example, if you have 1024 sub tables, all tables will be synced into Elasticsearch with index "river" and type "river".
 
-## Why not other rivers?
-
-Although there are some other MySQL rivers for Elasticsearch, like [elasticsearch-river-jdbc](https://github.com/jprante/elasticsearch-river-jdbc), [elasticsearch-river-mysql](https://github.com/scharron/elasticsearch-river-mysql), I still want to build a new one with Go, why?
-
-+ Customization, I want to decide which table to be synced, the associated index and type name, or even the field name in Elasticsearch.
-+ Incremental update with binlog, and can resume from the last sync position when the service starts again.
-+ A common sync framework not only for Elasticsearch but also for others, like memcached, redis, etc...
-+ Wildcard tables support, we have many sub tables like table_0000 - table_1023, but want use a unique Elasticsearch index and type.
-
 ## Todo
 
 + Improved logging including per table statistics summaries and log file control
@@ -154,9 +145,3 @@ Although there are some other MySQL rivers for Elasticsearch, like [elasticsearc
 + Better documentation and examples for creating mappings
 + Add support to run as a daemon service
 + Docker container
-
-## Feedback
-
-Feedback is welcome!
-
-Email: eric.halpern@gmail.com
