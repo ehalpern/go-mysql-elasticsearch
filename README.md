@@ -1,35 +1,52 @@
-Work in Progress!
+This is a work in progress! It should work as advertised but is under development and likely
+to change. 
 
-go-mysql-elasticsearch is a service syncing your MySQL data into Elasticsearch automatically.
+Automatically synchronize MSYQL with ElasticSearch. 
 
-It uses `mysqldump` to fetch the origin data at first, then syncs data incrementally with binlog.
+This project builds on [siddontang's](https://github.com/siddontang/go-mysql-elasticsearch) very
+capable foundation which:
 
++ Bootstraps data using [`mysqldump`](http://dev.mysql.com/doc/refman/5.7/en/mysqldump.html) and 
+  then continuously synchronizes using the MySQL replication protocol
++ Provides fine grained control over the mapping between db tables and elasticsearch indexes
+ 
+It includes the following enhancements:
+
++ Works with Amazon RDS. This requires a different technique for loading the initial database
+  dump.
++ Works with [`mydumper`]
+  (https://www.percona.com/blog/2015/11/12/logical-mysql-backup-tool-mydumper-0-9-1-now-available/) 
+  which is a faster alternative to `mysqldump`.
++ Batches elasticsearch updates to significantly improve throughput when synchronizing large 
+  tables.
++ Removes the need for a Makefile by moving dependencies to the vendor directory. 
+ 
 ## Install
 
-+ Install Go and set your [GOPATH](https://golang.org/doc/code.html#GOPATH)
-+ Install godep `go get github.com/tools/godep`
-+ `go get github.com/ehalpern/go-mysql-elasticsearch`, it will print some messages in console, skip it. :-)
-+ cd `$GOPATH/src/github.com/ehalpern/go-mysql-elasticsearch`
-+ `make`
++ Install Go and set your [GOPATH](https://golang.org/doc/code.html#GOPATH) 
+    + Instructions for [Debian](https://github.com/golang/go/wiki/Ubuntu)
+    + On OSX, run `brew install go`
+    + For other platforms, see the [Official Documentation](https://golang.org/doc/install)
++ Run `go get github.com/ehalpern/go-mysql-elasticsearch`
++ Run `go install github.com/ehalpern/go-mysql-elasticsearch`
++ Install mydumper 0.9.1 (https://launchpad.net/ubuntu/+source/mydumper)
 
 ## How to use?
 
-+ Create table in MySQL.
-+ Create the associated Elasticsearch index, document type and mappings if possible, if not, Elasticsearch will create these automatically.
-+ Config base, see the example config [river.toml](./etc/river.toml).
-+ Set MySQL source in config file, see [Source](#source) below.
-+ Customize MySQL and Elasticsearch mapping rule in config file, see [Rule](#rule) below.
++ Create a db and tables in MySQL
++ Create configuration for connecting to MySQL and ElasticSearch and defining table to index 
+  mappings. See an example config in [./etc/river.toml](./etc/river.toml) 
+    + Set MySQL source in config file, see [Source](#source) below.
+    + Customize MySQL and Elasticsearch mapping rule in config file, see [Rule](#rule) below.
 + Start `./bin/go-mysql-elasticsearch -config=./etc/river.toml` and enjoy it.
 
 ## Notice
 
-+ binlog format must be **row**.
-+ binlog row image must be **full** for MySQL, you may lost some field data if you update PK data in MySQL with minimal or noblob binlog row image. MariaDB only supports full row image.
-+ Can not alter table format at runtime.
-+ MySQL table which will be synced must have a PK(primary key), multi columns PK is allowed now, e,g, if the PKs is (a, b), we will use "a:b" as the key. The PK data will be used as "id" in Elasticsearch.
-+ You should create the associated mappings in Elasticsearch first, I don't think using the default mapping is a wise decision, you must know how to search accurately.
-+ `mysqldump` must exist in the same node with go-mysql-elasticsearch, if not, go-mysql-elasticsearch will try to sync binlog only.
-+ Don't change too many rows at same time in one SQL.
++ Binlog format must be **row** ([binlog-format=row](http://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_binlog_format))
++ Binlog row image must be **full** ([binlog-row-image=full](http://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_binlog_row_image)) for MySQL, you may lose some field dsdata if you update PK data in MySQL with minimal or noblob binlog row image. MariaDB only supports full row image.
++ Altering the db schema requires restarting and reindexing all data.
++ Each MySQL table must have a PK(primary key) which will be mapped to document _id. Multi column
+  PKs are allowed and result in ids of the form "k0:k1:..." where kn is the nth component of the PKy.
 
 ## Source
 
@@ -132,12 +149,15 @@ Although there are some other MySQL rivers for Elasticsearch, like [elasticsearc
 
 ## Todo
 
-+ Filtering table field support, only fields in filter config will be synced.
-+ Statistic.
-+ Docker
++ Improved logging including per table statistics summaries and log file control
++ Provide support for index auto-versioning so a new index can be ingested without
+  interfering with the running index
++ Better documentation and examples for creating mappings
++ Add support to run as a daemon service
++ Docker container
 
 ## Feedback
 
-go-mysql-elasticsearch is still in development, and we will try to use it in production later. Any feedback is very welcome.
+Feedback is welcome!
 
-Email: siddontang@gmail.com
+Email: eric.halpern@gmail.com
