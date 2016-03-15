@@ -42,10 +42,10 @@ It includes the following enhancements:
 ## Notice
 
 + Binlog format must be **row** ([binlog-format=row](http://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_binlog_format))
-+ Binlog row image must be **full** ([binlog-row-image=full](http://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_binlog_row_image)) for MySQL, you may lose some field dsdata if you update PK data in MySQL with minimal or noblob binlog row image. MariaDB only supports full row image.
-+ Altering the db schema requires restarting and reindexing all data.
++ Binlog row image must be **full** ([binlog-row-image=full](http://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_binlog_row_image))
++ Altering the db schema requires restarting and reindexing all data
 + Each MySQL table must have a PK(primary key) which will be mapped to document _id. Multi column
-  PKs are allowed and result in ids of the form "k0:k1:..." where kn is the nth component of the PKy.
+  PKs are allowed and result in ids of the form "k0:k1:..." where kn is the nth component of the PK
 
 ## Source
 
