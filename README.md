@@ -1,7 +1,6 @@
-## Automatically synchronize MSYQL with ElasticSearch. 
+## Automatically synchronize MSYQL with ElasticSearch
 
-_(This is a work in progress! It should work as advertised but is under development and likely
-to change.)_ 
+_(Work in progress! Should work as advertised but still under development)_ 
 
 This project builds on [siddontang's](https://github.com/siddontang/go-mysql-elasticsearch) very
 capable foundation which:
