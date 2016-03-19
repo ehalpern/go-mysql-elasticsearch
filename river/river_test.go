@@ -26,6 +26,7 @@ func Test(t *testing.T) {
 type riverTestSuite struct {
 	c *client.Conn
 	r *River
+	es *EsTestClient
 }
 
 var _ = Suite(&riverTestSuite{})

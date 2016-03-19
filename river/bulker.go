@@ -72,7 +72,7 @@ func (b *Bulker) Submit() error {
 	}
 	b.LastResponse, b.LastError = b.bulker.Do()
 	if b.LastError != nil {
-		log.Errorf("Bulk update %d/%d failed due to %v", size, b.MaxActions, b.LastError)
+		log.Errorf("Bulk update %d/%d failed due to %v: %+v", size, b.MaxActions, b.LastError, b.LastResponse)
 		return b.LastError
 	}
 	if b.LastResponse.Errors {
