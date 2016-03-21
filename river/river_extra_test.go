@@ -11,7 +11,7 @@ import (
 const (
 	testDb = "test"
 	testIgnoreDb = "test_ignore"
-	testExtraTable = "test_river_extra"
+	testExtraTable = "river_extra"
 	testExtraIndex = "river"
 	testExtraType = "extra"
 	testParentTable = "test_river_parent"
@@ -54,6 +54,8 @@ func (s *riverTestSuite) setupExtra(c *C) (r *River) {
 	cfg.DumpExec = "mydumper"
 
 	cfg.StatAddr = "127.0.0.1:12800"
+	cfg.MaxBulkActions = 0 // forces flush on every replication event; required for
+	                       // TestSchemaUpgrade
 
 	os.RemoveAll(cfg.DataDir)
 
@@ -164,5 +166,5 @@ func (s *riverTestSuite) TestSchemaUpgrade(c *C) {
 	err := river.canal.CatchMasterPos(10)
 	c.Assert(err, IsNil)
 	doc := s.testElasticExtraDoc(c, "1")
-	c.Assert(doc["new"], Equals, "not-set")
+	c.Assert(doc["new"], Equals, "set")
 }

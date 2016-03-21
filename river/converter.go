@@ -37,7 +37,9 @@ func Convert(rules map[string]*Rule, e *canal.RowsEvent) ([]elastic.BulkableRequ
 	case canal.DeleteAction:
 		reqs, err = convertDelete(rule, e.Rows)
 	case canal.UpdateAction:
+		log.Debugf("Converting update: %+v", e.Rows)
 		reqs, err = convertUpdate(rule, e.Rows)
+		log.Debugf("Converted update: %+v", reqs)
 	default:
 		return nil, errors.Errorf("Unrecognized action action %s", e.Action)
 	}

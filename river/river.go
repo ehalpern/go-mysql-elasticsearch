@@ -313,7 +313,7 @@ func (r *River) Run() error {
 }
 
 func (r *River) Close() {
-	log.Infof("closing river")
+	log.Infof("Closing river")
 	close(r.quit)
 
 	r.canal.Close()
