@@ -7,7 +7,6 @@ import (
 	"github.com/ehalpern/go-mysql/mysql"
 	"github.com/ehalpern/go-mysql/replication"
 	"github.com/siddontang/go/log"
-	//"regexp"
 )
 
 func (c *Canal) startSyncBinlog() error {
@@ -82,7 +81,10 @@ func (c *Canal) handleRowsEvent(e *replication.BinlogEvent) error {
 	table := string(ev.Table.Table)
 
 	t, err := c.GetTable(schema, table)
-	if err != nil {
+	if err == errTableNotFound {
+		// ignore
+		return nil
+	} else if err != nil {
 		return errors.Trace(err)
 	}
 	var action string
@@ -113,9 +115,13 @@ func (c *Canal) handleQueryEvent(e *replication.BinlogEvent) error {
 			schema = query.Schema
 		}
 		table, err := c.GetTable(schema, query.Table)
-		if err != nil {
+		if err == errTableNotFound {
+			// ignore
+			return nil
+		} else if err != nil {
 			return errors.Trace(err)
 		}
+
 		switch query.Operation {
 		case replication.ADD:
 			table.AddColumn(query.Column, query.Type, query.Extra)

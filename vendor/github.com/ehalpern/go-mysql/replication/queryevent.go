@@ -32,7 +32,7 @@ func NewQuotedScanner(r io.Reader) *bufio.Scanner {
 		quote, width := utf8.DecodeRune(data[start:])
 		i := start
 		if IsQuote(quote) {
-			log.Infof("Quote detected '%c'", quote)
+			log.Debugf("Quote detected '%c'", quote)
 			i = i + width
 		} else {
 			quote = 0
@@ -51,7 +51,7 @@ func NewQuotedScanner(r io.Reader) *bufio.Scanner {
 				// Look for ending quote
 				// BUG: need to implement escape handling
 				if r == quote {
-					log.Infof("Found end quote %d chars after start", i)
+					log.Debugf("Found end quote %d chars after start", i)
 					quote = 0
 				}
 			}
@@ -99,7 +99,7 @@ func ParseQuery(query string) (*AlterTableQuery, error) {
 	switch strings.ToUpper(scanner.Text()) {
 	case "ALTER":
 		if scanner.Scan(); strings.ToUpper(scanner.Text()) == "TABLE" {
-			log.Info("Scanned TABLE")
+			log.Debugf("Scanned TABLE")
 			return parseAlterTable(scanner)
 		}
 	default:

@@ -20,7 +20,10 @@ import (
 	"github.com/siddontang/go/sync2"
 )
 
-var errCanalClosed = errors.New("canal was closed")
+var (
+	errCanalClosed = errors.New("canal was closed")
+	errTableNotFound = errors.New("table does not exist in database")
+)
 
 // Canal can sync your MySQL data into everywhere, like Elasticsearch, Redis, etc...
 // MySQL must open row format for binlog
@@ -202,7 +205,9 @@ func (c *Canal) GetTable(db string, table string) (*schema.Table, error) {
 
 	t, err := schema.NewTable(c, db, table)
 	if err != nil {
-		return nil, errors.Trace(err)
+		// This can occur when a table has been created and then deleted since the last sync.
+		// This problem could be avoided by handling table creation in the replication stream.
+		return nil, errTableNotFound
 	}
 
 	c.tableLock.Lock()
