@@ -2,9 +2,6 @@
 	"ImportPath": "github.com/ehalpern/go-mysql-elasticsearch",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v60",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/BurntSushi/toml",
@@ -17,31 +14,31 @@
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/canal",
-			"Rev": "c4e865bbdc22f753c289bf97ab089b6c4a4ae73e"
+			"Rev": "972bb85319542cc7eace39b0c948409a418ab72a"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/client",
-			"Rev": "c4e865bbdc22f753c289bf97ab089b6c4a4ae73e"
+			"Rev": "972bb85319542cc7eace39b0c948409a418ab72a"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/dump",
-			"Rev": "c4e865bbdc22f753c289bf97ab089b6c4a4ae73e"
+			"Rev": "972bb85319542cc7eace39b0c948409a418ab72a"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/mysql",
-			"Rev": "c4e865bbdc22f753c289bf97ab089b6c4a4ae73e"
+			"Rev": "972bb85319542cc7eace39b0c948409a418ab72a"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/packet",
-			"Rev": "c4e865bbdc22f753c289bf97ab089b6c4a4ae73e"
+			"Rev": "972bb85319542cc7eace39b0c948409a418ab72a"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/replication",
-			"Rev": "c4e865bbdc22f753c289bf97ab089b6c4a4ae73e"
+			"Rev": "972bb85319542cc7eace39b0c948409a418ab72a"
 		},
 		{
 			"ImportPath": "github.com/ehalpern/go-mysql/schema",
-			"Rev": "c4e865bbdc22f753c289bf97ab089b6c4a4ae73e"
+			"Rev": "972bb85319542cc7eace39b0c948409a418ab72a"
 		},
 		{
 			"ImportPath": "github.com/juju/errors",
@@ -80,10 +77,6 @@
 			"ImportPath": "github.com/stretchr/testify/require",
 			"Comment": "v1.1.3-6-g6fe211e",
 			"Rev": "6fe211e493929a8aac0469b93f28b1d0688a9a3a"
-		},
-		{
-			"ImportPath": "gopkg.in/check.v1",
-			"Rev": "4f90aeace3a26ad7021961c297b22c42160c7b25"
 		},
 		{
 			"ImportPath": "gopkg.in/olivere/elastic.v3",
