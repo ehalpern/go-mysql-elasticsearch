@@ -22,7 +22,7 @@ import (
 
 var (
 	errCanalClosed = errors.New("canal was closed")
-	errTableNotFound = errors.New("table does not exist in database")
+	errTableIgnored = errors.New("table is ignored")
 )
 
 // Canal can sync your MySQL data into everywhere, like Elasticsearch, Redis, etc...
@@ -193,7 +193,24 @@ func (c *Canal) WaitDumpDone() <-chan struct{} {
 	return c.dumpDoneCh
 }
 
+func (c *Canal) ignoreTable(db string, table string) bool {
+	if db != c.dumper.TableDB {
+		return true
+	}
+	for _, t := range c.dumper.Tables {
+		if table == t {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *Canal) GetTable(db string, table string) (*schema.Table, error) {
+	//if c.ignoreTable(db, table) {
+	//	log.Warnf("Table ignored: %s.%s", db, table)
+	//	return nil, errTableIgnored
+	//}
+
 	key := fmt.Sprintf("%s.%s", db, table)
 	c.tableLock.Lock()
 	t, ok := c.tables[key]
@@ -205,9 +222,7 @@ func (c *Canal) GetTable(db string, table string) (*schema.Table, error) {
 
 	t, err := schema.NewTable(c, db, table)
 	if err != nil {
-		// This can occur when a table has been created and then deleted since the last sync.
-		// This problem could be avoided by handling table creation in the replication stream.
-		return nil, errTableNotFound
+		return nil, errTableIgnored
 	}
 
 	c.tableLock.Lock()

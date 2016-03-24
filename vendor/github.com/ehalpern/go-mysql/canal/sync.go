@@ -80,8 +80,9 @@ func (c *Canal) handleRowsEvent(e *replication.BinlogEvent) error {
 	schema := string(ev.Table.Schema)
 	table := string(ev.Table.Table)
 
+
 	t, err := c.GetTable(schema, table)
-	if err == errTableNotFound {
+	if err == errTableIgnored {
 		// ignore
 		return nil
 	} else if err != nil {
@@ -115,7 +116,7 @@ func (c *Canal) handleQueryEvent(e *replication.BinlogEvent) error {
 			schema = query.Schema
 		}
 		table, err := c.GetTable(schema, query.Table)
-		if err == errTableNotFound {
+		if err == errTableIgnored {
 			// ignore
 			return nil
 		} else if err != nil {
