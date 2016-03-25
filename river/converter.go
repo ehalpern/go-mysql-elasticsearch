@@ -28,6 +28,7 @@ func Convert(rules map[string]*Rule, e *canal.RowsEvent) ([]elastic.BulkableRequ
 		return nil, errors.Errorf("no rule found for %v", key )
 	}
 
+	log.Debugf("Converting %v", rule)
 	var reqs []elastic.BulkableRequest
 	var err error
 
@@ -150,8 +151,7 @@ func convertColumnData(col *schema.TableColumn, value interface{}) interface{} {
 			// for binlog, ENUM may be int64, but for dump, enum is string
 			eNum := value - 1
 			if eNum < 0 || eNum >= int64(len(col.EnumValues)) {
-				// we insert invalid enum value before, so return empty
-				log.Warnf("invalid binlog enum index %d, for enum %v", eNum, col.EnumValues)
+				// the column value is null
 				return ""
 			}
 
