@@ -33,7 +33,7 @@ It includes the following enhancements:
 ## How to use?
 
 + Create a db and tables in MySQL
-+ Create configuration for connecting to MySQL and ElasticSearch and defining table to index 
++ Create configuration for connecting to MySQL and ElasticSearch and define the table to index 
   mappings. See an example config in [./etc/river.toml](./etc/river.toml) 
     + Set MySQL source in config file, see [Source](#source) below.
     + Customize MySQL and Elasticsearch mapping rule in config file, see [Rule](#rule) below.
