@@ -1,7 +1,6 @@
 {
 	"ImportPath": "github.com/ehalpern/go-mysql-elasticsearch",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v60",
 	"Deps": [
 		{
 			"ImportPath": "github.com/BurntSushi/toml",
