@@ -109,6 +109,9 @@ func (c *Canal) handleQueryEvent(e *replication.BinlogEvent) error {
 	log.Debugf("query parsed: %v, %v", query, err)
 	if err == replication.ErrIgnored {
 		return nil
+	} else if err != nil {
+		log.Infof("failed to parse: %v, %v", string(ev.Query), err)
+		return nil
 	} else {
 		schema := string(ev.Schema)
 		if query.Schema != "" {
@@ -146,7 +149,7 @@ func (c *Canal) WaitUntilPos(pos mysql.Position, timeout int) error {
 		curpos := c.master.Pos()
 		select {
 		case <-timer.C:
-			return errors.Errorf("timed out waiting for position %v; only reached %v", pos)
+			return errors.Errorf("timed out waiting for position %v; only reached %v", pos, c.master.Pos())
 		default:
 			curpos = c.master.Pos()
 			if curpos.Compare(pos) >= 0 {

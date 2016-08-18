@@ -252,7 +252,7 @@ func (e *RowsEvent) Decode(data []byte) error {
 	var ok bool
 	e.Table, ok = e.tables[e.TableID]
 	if !ok {
-		return errors.Errorf("invalid table id %d, no correspond table map event", e.TableID)
+		return errors.Errorf("invalid table id %d, no correspond table map event in %+v", e.TableID, e.tables)
 	}
 
 	var err error

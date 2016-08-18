@@ -81,10 +81,14 @@ func (r *Rule) DocId(row []interface{}) (string, error) {
 
 
 func (r *Rule) ParentId(row []interface{}) (string, error) {
-	index := r.TableInfo.FindColumn(r.Parent)
-	if index < 0 {
-		return "", errors.Errorf("parent id not found %s(%s)", r.TableInfo.Name, r.Parent)
+	if len(r.Parent) == 0 {
+		return "", nil
+	} else {
+		index := r.TableInfo.FindColumn(r.Parent)
+		if index < 0 {
+			return "", errors.Errorf("parent id not found %s(%s)", r.TableInfo.Name, r.Parent)
+		}
+		return fmt.Sprint(row[index]), nil
 	}
-	return fmt.Sprint(row[index]), nil
 }
 

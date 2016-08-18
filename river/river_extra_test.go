@@ -75,13 +75,16 @@ func (s *riverTestSuite) setupExtra(c *C) (r *River) {
 	r, err = NewRiver(cfg)
 	c.Assert(err, IsNil)
 
-	mapping := map[string]interface{}{
-		testExtraType: map[string]interface{}{
-			"_parent": map[string]string{"type": testParentType},
+	mapping := map[string]interface{} {
+		"mappings": map[string]interface{} {
+			testExtraType: map[string]interface{} {
+				"_parent": map[string]string{"type": testParentType},
+			},
 		},
 	}
-
-	r.es.PutMapping().Index(testExtraIndex).Type(testExtraType).BodyJson(mapping).Do()
+	r.es.DeleteIndex(testExtraIndex).Do() // ignore failures
+	_, err = r.es.CreateIndex(testExtraIndex).BodyJson(mapping).Do()
+	c.Assert(err, IsNil)
 
 	return r
 }
@@ -97,7 +100,6 @@ func (s *riverTestSuite) testPrepareExtraData(c *C) {
 	s.testExecute(c, "INSERT INTO "+testParentTable+" (id) VALUES (?)", 1)
 
 	s.testExecute(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 1, "first", 1)
-
 	s.testExecute(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 2, "second", 1)
 	s.testExecute(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 3, "third", 1)
 	s.testExecute(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 4, "fourth", 1)
@@ -141,7 +143,7 @@ func (s *riverTestSuite) TestRiverWithParent(c *C) {
 	s.testExecute(c, "INSERT INTO "+testDb+"."+testIgnoreTable+" (id) VALUES (?)", 1)
 
 	s.testExecute(c, "DELETE FROM "+testExtraTable+" WHERE id = ?", 1)
-	err := river.canal.CatchMasterPos(1)
+	err := river.canal.CatchMasterPos(10)
 	c.Assert(err, IsNil)
 
 	s.testElasticExtraExists(c, "1", "1", false)

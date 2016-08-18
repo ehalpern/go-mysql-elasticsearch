@@ -190,6 +190,7 @@ func (s *riverTestSuite) testElasticGet(c *C, id string) (*elastic.GetResult, ma
 	return resp, source
 }
 
+
 func (s *riverTestSuite) testWaitSyncDone(c *C) {
 	err := s.r.canal.CatchMasterPos(10)
 	c.Assert(err, IsNil)
@@ -266,3 +267,4 @@ func (s *riverTestSuite) TestRiver(c *C) {
 		c.Assert(source["es_title"], Equals, "hello")
 	}
 }
+

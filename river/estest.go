@@ -39,6 +39,12 @@ func (tc *EsTestClient) createIndex(index string) *EsTestClient {
 	return tc
 }
 
+func (tc *EsTestClient) createIndexWithSettings(index string, settings map[string]interface{}) *EsTestClient {
+	_, err := tc.es.CreateIndex(index).BodyJson(settings).Do()
+	require.NoError(tc.t, err)
+	return tc
+}
+
 func (tc *EsTestClient) deleteIndex(index string) *EsTestClient {
 	_, err := tc.es.DeleteIndex(index).Do()
 	if !elastic.IsNotFound(err) {
@@ -51,20 +57,24 @@ func (tc *EsTestClient) recreateIndex(index string) *EsTestClient {
 	return tc.deleteIndex(index).createIndex(index)
 }
 
+func (tc *EsTestClient) recreateIndexWithSettings(index string, settings map[string]interface{}) *EsTestClient {
+	return tc.deleteIndex(index).createIndexWithSettings(index, settings)
+}
+
 func (tc *EsTestClient) searchMatchAll(index string) *elastic.SearchResult {
 	result, err := tc.es.Search(index).Do()
 	require.NoError(tc.t, err)
 	return result
 }
 
-func (tc *EsTestClient) putDocument(index string, typ string, id string, doc interface{}) *EsTestClient {
-	_, err := tc.es.Index().Index(index).Type(typ).Id(id).BodyJson(doc).Do()
+func (tc *EsTestClient) putDocument(index string, typ string, id string, routeId string, doc interface{}) *EsTestClient {
+	_, err := tc.es.Index().Index(index).Type(typ).Id(id).Routing(routeId).BodyJson(doc).Do()
 	require.NoError(tc.t, err)
 	return tc
 }
 
-func (tc *EsTestClient) getDocument(index string, typ string, id string) *elastic.GetResult {
-	result, err := tc.es.Get().Index(index).Type(typ).Id(id).Do()
+func (tc *EsTestClient) getDocument(index string, typ string, id string, routeId string) *elastic.GetResult {
+	result, err := tc.es.Get().Index(index).Type(typ).Id(id).Routing(routeId).Do()
 	if elastic.IsNotFound(err) {
 		return nil
 	}
@@ -72,8 +82,8 @@ func (tc *EsTestClient) getDocument(index string, typ string, id string) *elasti
 	return result
 }
 
-func (tc *EsTestClient) getDocumentMap(index string, typ string, id string) map[string]interface{} {
-	result := tc.getDocument(index, typ, id)
+func (tc *EsTestClient) getDocumentMap(index string, typ string, id string, routeId string) map[string]interface{} {
+	result := tc.getDocument(index, typ, id, routeId)
 	if result == nil {
 		return nil
 	}

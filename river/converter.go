@@ -57,28 +57,21 @@ func convertAction(rule *Rule, action string, rows [][]interface{}) ([]elastic.B
 	reqs := make([]elastic.BulkableRequest, 0, len(rows))
 
 	for _, values := range rows {
-		id, err := rule.DocId(values)
-		if err != nil {
+		if id, err := rule.DocId(values); err != nil {
 			return nil, err
-		}
-
-		var req elastic.BulkableRequest
-
-		if action == canal.DeleteAction {
-			req = elastic.NewBulkDeleteRequest().Index(rule.Index).Type(rule.Type).Id(id)
 		} else {
-			parentID := ""
-			if len(rule.Parent) > 0 {
-				if parentID, err = rule.ParentId(values); err != nil {
-					return nil, err
-				}
+			var req elastic.BulkableRequest
+
+			if parentId, err := rule.ParentId(values); err != nil {
+				return nil, err
+			} else if action == canal.DeleteAction {
+				req = elastic.NewBulkDeleteRequest().Index(rule.Index).Type(rule.Type).Id(id).Routing(parentId)
+			} else {
+				doc := convertRow(rule, values)
+				req = elastic.NewBulkIndexRequest().Index(rule.Index).Type(rule.Type).Parent(parentId).Id(id).Routing(parentId).Doc(doc)
 			}
-
-			doc := convertRow(rule, values)
-			req = elastic.NewBulkIndexRequest().Index(rule.Index).Type(rule.Type).Parent(parentID).Id(id).Doc(doc)
+			reqs = append(reqs, req)
 		}
-
-		reqs = append(reqs, req)
 	}
 
 	return reqs, nil
@@ -113,21 +106,21 @@ func convertUpdate(rule *Rule, rows [][]interface{}) ([]elastic.BulkableRequest,
 		}
 
 		beforeParentID, afterParentID := "", ""
-		if len(rule.Parent) > 0 {
-			if beforeParentID, err = rule.ParentId(rows[i]); err != nil {
-				return nil, errors.Trace(err)
-			}
-			if afterParentID, err = rule.ParentId(rows[i+1]); err != nil {
-				return nil, errors.Trace(err)
-			}
+		beforeParentID, err = rule.ParentId(rows[i])
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		afterParentID, err = rule.ParentId(rows[i+1])
+		if err != nil {
+			return nil, errors.Trace(err)
 		}
 
 		var req elastic.BulkableRequest
-		req = elastic.NewBulkUpdateRequest().Index(rule.Index).Type(rule.Type).Parent(beforeParentID).Id(beforeID)
+		req = elastic.NewBulkUpdateRequest().Index(rule.Index).Type(rule.Type).Parent(beforeParentID).Id(beforeID).Routing(beforeParentID)
 
 		if beforeID != afterID || beforeParentID != afterParentID {
 			// if an id is changing, delete the old document and insert a new one
-			req = elastic.NewBulkDeleteRequest().Index(rule.Index).Type(rule.Type).Id(beforeID)
+			req = elastic.NewBulkDeleteRequest().Index(rule.Index).Type(rule.Type).Id(beforeID).Routing(beforeParentID)
 			reqs = append(reqs, req)
 			temp, err := convertInsert(rule, [][]interface{}{rows[i+1]})
 			if err == nil {
@@ -135,7 +128,7 @@ func convertUpdate(rule *Rule, rows [][]interface{}) ([]elastic.BulkableRequest,
 			}
 		} else {
 			doc := convertUpdateRow(rule, rows[i], rows[i+1])
-			req = elastic.NewBulkUpdateRequest().Index(rule.Index).Type(rule.Type).Parent(beforeParentID).Id(beforeID).Doc(doc)
+			req = elastic.NewBulkUpdateRequest().Index(rule.Index).Type(rule.Type).Parent(beforeParentID).Id(beforeID).Routing(beforeParentID).Doc(doc)
 		}
 		reqs = append(reqs, req)
 	}
