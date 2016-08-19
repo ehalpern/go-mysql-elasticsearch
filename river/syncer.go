@@ -3,7 +3,7 @@ package river
 import (
 	"github.com/juju/errors"
 	"github.com/ehalpern/go-mysql/canal"
-"github.com/siddontang/go/log"
+	"github.com/siddontang/go/log"
 )
 
 type syncer struct {

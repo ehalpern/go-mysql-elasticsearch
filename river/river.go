@@ -21,67 +21,47 @@ import (
 // We use this definition here too, although it may not run within Elasticsearch.
 // Maybe later I can implement a acutal river in Elasticsearch, but I must learn java. :-)
 type River struct {
-	c *Config
-	canal *canal.Canal
-	rules map[string]*Rule
-	quit chan struct{}
-	wg   sync.WaitGroup
-	es *elastic.Client
-	st *stat
+	config *Config
+	canal  *canal.Canal
+	rules  map[string]*Rule
+	quit   chan struct{}
+	wg     sync.WaitGroup
+	es     *elastic.Client
+	st     *stat
 }
 
 func NewRiver(c *Config) (*River, error) {
 	r := new(River)
-
-	r.c = c
-
+	r.config = c
 	r.quit = make(chan struct{})
-
 	r.rules = make(map[string]*Rule)
-
-	var err error
-	if err = r.newCanal(); err != nil {
-		return nil, errors.Trace(err)
-	}
-
-	if err = r.prepareRule(); err != nil {
-		return nil, errors.Trace(err)
-	}
-
-	r.es, err = elastic.NewClient(
-		elastic.SetURL("http://" + r.c.ESAddr),
-		//elastic.SetTraceLog(stdlog.New(os.Stdout, "", 0)),
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	r.st = &stat{r: r}
 
-	if err = r.prepareCanal(); err != nil {
+	if err := r.newCanal(); err != nil {
+		return nil, errors.Trace(err)
+	} else if err = r.prepareRule(); err != nil {
+		return nil, errors.Trace(err)
+	} else if r.es, err = elastic.NewClient(elastic.SetURL("http://" + r.config.ESAddr)); err != nil {
+		return nil, err
+	} else if err := r.prepareCanal(); err != nil {
+		return nil, errors.Trace(err)
+	} else if err = r.canal.CheckBinlogRowImage("FULL"); err != nil {
+		// We must use binlog full row image
 		return nil, errors.Trace(err)
 	}
-
-	// We must use binlog full row image
-	if err = r.canal.CheckBinlogRowImage("FULL"); err != nil {
-		return nil, errors.Trace(err)
-	}
-
-	go r.st.Run(r.c.StatAddr)
-
+	go r.st.Run(r.config.StatAddr)
 	return r, nil
 }
 
 func (r *River) newCanal() error {
 	cfg := canal.NewDefaultConfig()
-	cfg.Addr = r.c.MyAddr
-	cfg.User = r.c.MyUser
-	cfg.Password = r.c.MyPassword
-	cfg.Flavor = r.c.Flavor
-	cfg.DataDir = r.c.DataDir
-
-	cfg.ServerID = r.c.ServerID
-	cfg.Dump.ExecutionPath = r.c.DumpExec
+	cfg.Addr = r.config.MyAddr
+	cfg.User = r.config.MyUser
+	cfg.Password = r.config.MyPassword
+	cfg.Flavor = r.config.Flavor
+	cfg.DataDir = r.config.DataDir
+	cfg.ServerID = r.config.ServerID
+	cfg.Dump.ExecutionPath = r.config.DumpExec
 	cfg.Dump.DiscardErr = false
 	var err error
 	r.canal, err = canal.NewCanal(cfg)
@@ -111,7 +91,7 @@ func (r *River) prepareCanal() error {
 		r.canal.AddDumpDatabases(keys...)
 	}
 
-	s := syncer{r.st, r.rules, NewBulker(r.es, r.c.MaxBulkActions)}
+	s := syncer{r.st, r.rules, NewBulker(r.es, r.config.MaxBulkActions)}
 	r.canal.RegRowsEventHandler(&s)
 
 	return nil
@@ -129,10 +109,10 @@ func (r *River) newRule(schema, table string) error {
 }
 
 func (r *River) parseSource() (map[string][]string, error) {
-	wildTables := make(map[string][]string, len(r.c.Sources))
+	wildTables := make(map[string][]string, len(r.config.Sources))
 
 	// first, check sources
-	for _, s := range r.c.Sources {
+	for _, s := range r.config.Sources {
 		for _, table := range s.Tables {
 			if len(s.Schema) == 0 {
 				return nil, errors.Errorf("empty schema not allowed for source")
@@ -186,9 +166,9 @@ func (r *River) prepareRule() error {
 		return errors.Trace(err)
 	}
 
-	if r.c.Rules != nil {
+	if r.config.Rules != nil {
 		// then, set custom mapping rule
-		for _, rule := range r.c.Rules {
+		for _, rule := range r.config.Rules {
 			if len(rule.Schema) == 0 {
 				return errors.Errorf("empty schema not allowed for rule")
 			}
@@ -273,7 +253,7 @@ func readIndexFile(configDir string, rule *Rule) ([]byte, error) {
 }
 
 func (r *River) createIndexes() error {
-	configDir := filepath.Dir(r.c.ConfigFile)
+	configDir := filepath.Dir(r.config.ConfigFile)
 	for _, rule := range r.rules {
 		data, err := readIndexFile(configDir, rule)
 		if err != nil {
