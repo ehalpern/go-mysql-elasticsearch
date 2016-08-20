@@ -7,6 +7,12 @@ import (
 	"github.com/juju/errors"
 )
 
+const (
+	ServiceName = "mysql2es"
+	ServiceDesc = "mysql to elasticsearch replication"
+	ServiceDataDir = "/var/" + ServiceName
+
+)
 type SourceConfig struct {
 	Schema string   `toml:"schema"`
 	Tables []string `toml:"tables"`
@@ -66,7 +72,7 @@ func NewDefaultConfig() *Config {
 		DbPassword: "",
 		EsHost: "127.0.0.1:9200",
 		EsMaxActions: 100,
-		DataDir: "./var",
+		DataDir: "./var/" + ServiceName,
 		DumpExec: "mydumper",
 	}
 }

@@ -2,15 +2,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"syscall"
 
 	"github.com/ehalpern/go-mysql-elasticsearch/river"
 	"github.com/juju/errors"
-	"fmt"
-	"path/filepath"
 )
 
 var configFile = flag.String("config", "./etc/river.toml", "replication config file")

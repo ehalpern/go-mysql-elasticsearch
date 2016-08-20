@@ -5,11 +5,7 @@ import (
 	"os"
 
 	"github.com/takama/daemon"
-)
-
-const (
-	name        = "mysql-elasticsearch"
-	description = "Replicate MySQL to Elasticsearch"
+	"github.com/ehalpern/go-mysql-elasticsearch/river"
 )
 
 var stdlog, errlog *log.Logger
@@ -20,7 +16,7 @@ type Service struct {
 }
 
 func NewService() (*Service, error) {
-	daemon, err := daemon.New(name, name)
+	daemon, err := daemon.New(river.ServiceName, river.ServiceDesc)
 	if err != nil {
 		return nil, err
 	}
