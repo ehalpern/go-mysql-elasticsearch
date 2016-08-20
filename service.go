@@ -19,11 +19,10 @@ type Service struct {
 	daemon.Daemon
 }
 
-func NewService() *Service {
-	daemon, err := daemon.New(name, description)
+func NewService() (*Service, error) {
+	daemon, err := daemon.New(name, name)
 	if err != nil {
-		errlog.Println("Error: ", err)
-		os.Exit(1)
+		return nil, err
 	}
 	return &Service{daemon}
 }

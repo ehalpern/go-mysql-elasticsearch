@@ -49,8 +49,10 @@ func main() {
 	}
 
 	if *serviceOp != "" {
-		s := NewService()
-
+		s, err := NewService()
+		if err != nil {
+			return
+		}
 		switch *serviceOp {
 		case "install":
 			status, err = s.Install("-config", absConfigFile)
