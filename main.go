@@ -29,14 +29,14 @@ func main() {
 
 	flag.Parse()
 
-	if serviceOp != "" {
+	if *serviceOp != "" {
 		s := NewService()
 		var status string
 		var err error
 
 		switch *serviceOp {
 		case "install":
-			status, err = s.Install("-config", configFile)
+			status, err = s.Install("-config", *configFile)
 		case "remove":
 			status, err = s.Remove()
 		case "start":
@@ -46,7 +46,8 @@ func main() {
 		case "status":
 			status, err = s.Status()
 		default:
-			err = flag.Usage()
+			flag.Usage()
+			err = errors.Errorf("unrecognized -service option " + *serviceOp)
 		}
 		if err != nil {
 			errlog.Println("Error: ", err)
