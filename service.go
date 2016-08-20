@@ -24,7 +24,7 @@ func NewService() (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Service{daemon}
+	return &Service{daemon}, nil
 }
 
 func init() {
