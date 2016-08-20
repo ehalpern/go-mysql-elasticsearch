@@ -47,17 +47,12 @@ func (s *riverTestSuite) SetUpSuite(c *C) {
 	}
 
 	cfg := new(Config)
-	cfg.MyAddr = *my_addr
-	cfg.MyUser = *my_user
-	cfg.MyPassword = *my_pass
-	cfg.ESAddr = *es_addr
-
-	cfg.ServerID = 1001
-	cfg.Flavor = "mysql"
-
+	cfg.DbHost = *my_addr
+	cfg.DbUser = *my_user
+	cfg.DbPassword = *my_pass
+	cfg.EsHost = *es_addr
+	cfg.DbSlaveID = 1001
 	cfg.DataDir = "/tmp/test_river"
-	cfg.DumpExec = "mydumper"
-
 	cfg.StatAddr = "127.0.0.1:12800"
 
 	os.RemoveAll(cfg.DataDir)
@@ -116,11 +111,11 @@ func (s *riverTestSuite) TearDownSuite(c *C) {
 
 func (s *riverTestSuite) TestConfig(c *C) {
 	str := `
-my_addr = "127.0.0.1:3306"
-my_user = "root"
-my_pass = ""
+db_host = "127.0.0.1:3306"
+db_user = "root"
+db_pass = ""
 
-es_addr = "127.0.0.1:9200"
+es_host = "127.0.0.1:9200"
 
 data_dir = "./var"
 

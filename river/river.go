@@ -41,7 +41,7 @@ func NewRiver(c *Config) (*River, error) {
 		return nil, errors.Trace(err)
 	} else if err = r.prepareRule(); err != nil {
 		return nil, errors.Trace(err)
-	} else if r.es, err = elastic.NewClient(elastic.SetURL("http://" + r.config.ESAddr)); err != nil {
+	} else if r.es, err = elastic.NewClient(elastic.SetURL("http://" + r.config.EsHost)); err != nil {
 		return nil, err
 	} else if err := r.prepareCanal(); err != nil {
 		return nil, errors.Trace(err)
@@ -55,12 +55,12 @@ func NewRiver(c *Config) (*River, error) {
 
 func (r *River) newCanal() error {
 	cfg := canal.NewDefaultConfig()
-	cfg.Addr = r.config.MyAddr
-	cfg.User = r.config.MyUser
-	cfg.Password = r.config.MyPassword
-	cfg.Flavor = r.config.Flavor
+	cfg.Addr = r.config.DbHost
+	cfg.User = r.config.DbUser
+	cfg.Password = r.config.DbPassword
+	cfg.Flavor = "mysql"
 	cfg.DataDir = r.config.DataDir
-	cfg.ServerID = r.config.ServerID
+	cfg.ServerID = r.config.DbSlaveID
 	cfg.Dump.ExecutionPath = r.config.DumpExec
 	cfg.Dump.DiscardErr = false
 	var err error
@@ -91,7 +91,7 @@ func (r *River) prepareCanal() error {
 		r.canal.AddDumpDatabases(keys...)
 	}
 
-	s := syncer{r.st, r.rules, NewBulker(r.es, r.config.MaxBulkActions)}
+	s := syncer{r.st, r.rules, NewBulker(r.es, r.config.EsMaxActions)}
 	r.canal.RegRowsEventHandler(&s)
 
 	return nil
