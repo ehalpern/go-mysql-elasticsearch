@@ -9,30 +9,52 @@ import (
 
 	"github.com/ehalpern/go-mysql-elasticsearch/river"
 	"github.com/juju/errors"
+	"fmt"
 )
 
 var configFile = flag.String("config", "./etc/river.toml", "replication config file")
-var dbHost = flag.String("my_addr", "", "DB host and port")
-var dbUser = flag.String("my_user", "", "DB user")
-var dbPass = flag.String("my_pass", "", "DB password")
-var dbFlavor = flag.String("flavor", "", "DB flavor [mysql | mariadb]")
-var dbServerId = flag.Int("server_id", 0, "MySQL server id, as a pseudo slave")
-var esHost = flag.String("es_addr", "", "Elasticsearch host and port")
-var esMaxActions = flag.Int("es_max_actions", 0, "maximum size of an elasticsearch bulk update")
+var serviceOp = flag.String("service", "", "install|remove|[re]start|stop|status")
+var dbHost = flag.String("db_host", "", "DB host and port")
+var dbUser = flag.String("db_user", "", "DB user")
+var dbPass = flag.String("db_pass", "", "DB password")
+var dbSlaveId = flag.Int("db_slave_id", 0, "MySQL slave id")
+var esHost = flag.String("es_host", "", "Elasticsearch host and port")
+var esMaxActions = flag.Int("es_max_actions", 0, "maximum elasticsearch bulk update size")
 var dataDir = flag.String("data_dir", "", "path do store data")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
+
 	flag.Parse()
 
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc,
-		os.Kill,
-		os.Interrupt,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
+	if serviceOp != "" {
+		s := NewService()
+		var status string
+		var err error
+
+		switch serviceOp {
+		case "install":
+			status, err = s.Install("-config", configFile)
+		case "remove":
+			status, err = s.Remove()
+		case "start":
+			status, err = s.Start()
+		case "stop":
+			status, err = s.Stop()
+		case "status":
+			status, err = s.Status()
+		default:
+			err = flag.Usage()
+		}
+		if err != nil {
+			errlog.Println("Error: ", err)
+			os.Exit(1)
+		}
+		fmt.Println(status)
+		os.Exit(1)
+	}
 
 	cfg, err := river.NewConfigWithFile(*configFile)
 	if err != nil {
@@ -43,35 +65,21 @@ func main() {
 	if len(*dbHost) > 0 {
 		cfg.DbHost = *dbHost
 	}
-
 	if len(*dbUser) > 0 {
 		cfg.DbUser = *dbUser
 	}
-
 	if len(*dbPass) > 0 {
 		cfg.DbPassword = *dbPass
 	}
-
-	if *dbServerId > 0 {
-		cfg.DbSlaveID = uint32(*dbServerId)
+	if *dbSlaveId > 0 {
+		cfg.DbSlaveID = uint32(*dbSlaveId)
 	}
-
 	if len(*esHost) > 0 {
 		cfg.EsHost = *esHost
 	}
-
 	if len(*dataDir) > 0 {
 		cfg.DataDir = *dataDir
 	}
-
-	if len(*dbFlavor) > 0 {
-		cfg.DbFlavor = *dbFlavor
-	}
-
-	if len(*dumpProg) > 0 {
-		cfg.DumpExec = *dumpProg
-	}
-
 	if *esMaxActions > 0 {
 		cfg.EsMaxActions = *esMaxActions
 	}
@@ -86,6 +94,6 @@ func main() {
 		println(errors.ErrorStack(err))
 	}
 
-	<-sc
+	<-interrupt
 	r.Close()
 }
