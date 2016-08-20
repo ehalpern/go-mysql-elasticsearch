@@ -1,5 +1,5 @@
-hash: 730d28f90e8497b3fe16a768b80b8a8a25296b52a5fa682bce6b1b54668d27f4
-updated: 2016-08-20T01:11:00.246370959-07:00
+hash: 9e57d0fb3015a8d2b830afca339359cd0ff370750d1d0a60703dec297a404992
+updated: 2016-08-20T12:58:58.775637859-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
@@ -38,7 +38,8 @@ imports:
   - assert
   - require
 - name: github.com/takama/daemon
-  version: a16f14dc0486a9312845dc73e3d57217e78a2ae7
+  version: 3bf393c2cc2cbbc7e31e1b91c897798dabad5621
+  repo: git@github.com:ehalpern/daemon.git
 - name: gopkg.in/olivere/elastic.v3
   version: 787ebbb5a7600662bca364e4e8ca959f315e442f
   subpackages:
