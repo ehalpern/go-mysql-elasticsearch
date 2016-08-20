@@ -34,7 +34,7 @@ func main() {
 		var status string
 		var err error
 
-		switch serviceOp {
+		switch *serviceOp {
 		case "install":
 			status, err = s.Install("-config", configFile)
 		case "remove":
