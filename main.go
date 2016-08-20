@@ -10,6 +10,7 @@ import (
 	"github.com/ehalpern/go-mysql-elasticsearch/river"
 	"github.com/juju/errors"
 	"fmt"
+	"path/filepath"
 )
 
 var configFile = flag.String("config", "./etc/river.toml", "replication config file")
@@ -29,14 +30,30 @@ func main() {
 
 	flag.Parse()
 
+	var status string
+	var err error
+
+	defer func() {
+		if err != nil {
+			errlog.Println("Error: ", err)
+			os.Exit(1)
+		} else {
+			fmt.Println(status)
+			os.Exit(0)
+		}
+	}()
+
+	absConfigFile, err := filepath.Abs(*configFile)
+	if err != nil {
+		return
+	}
+
 	if *serviceOp != "" {
 		s := NewService()
-		var status string
-		var err error
 
 		switch *serviceOp {
 		case "install":
-			status, err = s.Install("-config", *configFile)
+			status, err = s.Install("-config", absConfigFile)
 		case "remove":
 			status, err = s.Remove()
 		case "start":
@@ -49,17 +66,11 @@ func main() {
 			flag.Usage()
 			err = errors.Errorf("unrecognized -service option " + *serviceOp)
 		}
-		if err != nil {
-			errlog.Println("Error: ", err)
-			os.Exit(1)
-		}
-		fmt.Println(status)
-		os.Exit(1)
+		return
 	}
 
 	cfg, err := river.NewConfigWithFile(*configFile)
 	if err != nil {
-		println(errors.ErrorStack(err))
 		return
 	}
 
@@ -86,15 +97,16 @@ func main() {
 	}
 
 	r, err := river.NewRiver(cfg)
+
 	if err != nil {
-		println(errors.ErrorStack(err))
 		return
 	}
 
 	if err = r.Run(); err != nil {
-		println(errors.ErrorStack(err))
+		return
 	}
 
 	<-interrupt
 	r.Close()
 }
+
