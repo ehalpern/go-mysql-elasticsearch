@@ -6,6 +6,7 @@ import (
 
 	. "gopkg.in/check.v1"
 	"encoding/json"
+	"github.com/ehalpern/go-mysql-elasticsearch/config"
 )
 
 const (
@@ -41,30 +42,28 @@ func (s *riverTestSuite) setupExtra(c *C) (r *River) {
 	s.testPrepareTable(c, testIgnoreDb, testExtraTable, schema)
 	s.testPrepareTable(c, testDb, testIgnoreTable, schema)
 
-	cfg := new(Config)
+	cfg := new(config.Config)
 	cfg.DbHost = *my_addr
 	cfg.DbUser = *my_user
 	cfg.DbPassword = *my_pass
 	cfg.EsHost = *es_addr
 
-	cfg.DbSlaveID = 1001
+	cfg.DbSlaveID = 3001
 
 	cfg.DataDir = "/tmp/test_river_extra"
-
-	cfg.StatAddr = "127.0.0.1:12800"
 	cfg.EsMaxActions = 0 // forces flush on every replication event; required for
 	                       // TestSchemaUpgrade
 
 	os.RemoveAll(cfg.DataDir)
 
-	cfg.Sources = []SourceConfig{SourceConfig{Schema: testDb, Tables: []string{testExtraTable, testParentTable}}}
+	cfg.Sources = []config.SourceConfig{config.SourceConfig{Schema: testDb, Tables: []string{testExtraTable, testParentTable}}}
 
-	cfg.Rules = []*Rule{
-		&Rule{Schema: testDb,
+	cfg.Rules = []*config.Rule{
+		&config.Rule{Schema: testDb,
 			Table: testParentTable,
 			Index: testExtraIndex,
 			Type:  testParentType},
-		&Rule{Schema: testDb,
+		&config.Rule{Schema: testDb,
 			Table:  testExtraTable,
 			Index:  testExtraIndex,
 			Type:   testExtraType,
@@ -89,18 +88,18 @@ func (s *riverTestSuite) setupExtra(c *C) (r *River) {
 
 func (s *riverTestSuite) testPrepareTable(c *C, db string, table string, schema string) {
 	fullName := db + "." + table
-	s.testExecute(c, "CREATE DATABASE IF NOT EXISTS " + db)
-	s.testExecute(c, "DROP TABLE IF EXISTS " + fullName)
-	s.testExecute(c, fmt.Sprintf(schema, fullName))
+	s.dbExec(c, "CREATE DATABASE IF NOT EXISTS " + db)
+	s.dbExec(c, "DROP TABLE IF EXISTS " + fullName)
+	s.dbExec(c, fmt.Sprintf(schema, fullName))
 }
 
 func (s *riverTestSuite) testPrepareExtraData(c *C) {
-	s.testExecute(c, "INSERT INTO "+testParentTable+" (id) VALUES (?)", 1)
+	s.dbExec(c, "INSERT INTO "+testParentTable+" (id) VALUES (?)", 1)
 
-	s.testExecute(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 1, "first", 1)
-	s.testExecute(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 2, "second", 1)
-	s.testExecute(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 3, "third", 1)
-	s.testExecute(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 4, "fourth", 1)
+	s.dbExec(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 1, "first", 1)
+	s.dbExec(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 2, "second", 1)
+	s.dbExec(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 3, "third", 1)
+	s.dbExec(c, "INSERT INTO "+testExtraTable+" (id, title, pid) VALUES (?, ?, ?)", 4, "fourth", 1)
 }
 
 func (s *riverTestSuite) testElasticExtraExists(c *C, id string, parent string, exist bool) {
@@ -137,10 +136,10 @@ func (s *riverTestSuite) TestRiverWithParent(c *C) {
 	s.testElasticExtraExists(c, "1", "1", true)
 
 	// Make sure inserting into ignored tables doesn't break anything
-	s.testExecute(c, "INSERT INTO "+testIgnoreDb+"."+testExtraTable+" (id) VALUES (?)", 1)
-	s.testExecute(c, "INSERT INTO "+testDb+"."+testIgnoreTable+" (id) VALUES (?)", 1)
+	s.dbExec(c, "INSERT INTO "+testIgnoreDb+"."+testExtraTable+" (id) VALUES (?)", 1)
+	s.dbExec(c, "INSERT INTO "+testDb+"."+testIgnoreTable+" (id) VALUES (?)", 1)
 
-	s.testExecute(c, "DELETE FROM "+testExtraTable+" WHERE id = ?", 1)
+	s.dbExec(c, "DELETE FROM "+testExtraTable+" WHERE id = ?", 1)
 	err := river.canal.CatchMasterPos(10)
 	c.Assert(err, IsNil)
 
@@ -161,8 +160,8 @@ func (s *riverTestSuite) TestSchemaUpgrade(c *C) {
 	s.testElasticExtraExists(c, "1", "1", true)
 
 	// Make sure inserting into ignored tables doesn't break anything
-	s.testExecute(c, "ALTER TABLE "+testExtraTable+" ADD new VARCHAR(256) DEFAULT 'not-set'")
-	s.testExecute(c, "UPDATE "+testExtraTable+" SET new='set' WHERE id=1")
+	s.dbExec(c, "ALTER TABLE "+testExtraTable+" ADD new VARCHAR(256) DEFAULT 'not-set'")
+	s.dbExec(c, "UPDATE "+testExtraTable+" SET new='set' WHERE id=1")
 	err := river.canal.CatchMasterPos(10)
 	c.Assert(err, IsNil)
 	doc := s.testElasticExtraDoc(c, "1")

@@ -6,6 +6,7 @@ import (
 
 	"github.com/ehalpern/go-mysql/canal"
 	"github.com/ehalpern/go-mysql/schema"
+	"github.com/ehalpern/go-mysql-elasticsearch/config"
 	"github.com/juju/errors"
 	"github.com/siddontang/go/log"
 
@@ -21,7 +22,7 @@ const (
 )
 
 // Converts database replication row events to elasticsearch bulk actions
-func Convert(rules map[string]*Rule, e *canal.RowsEvent) ([]elastic.BulkableRequest, error) {
+func Convert(rules map[string]*config.Rule, e *canal.RowsEvent) ([]elastic.BulkableRequest, error) {
 	key := ruleKey(e.Table.Schema, e.Table.Name)
 	rule, ok := rules[key]
 	if !ok {
@@ -53,7 +54,7 @@ func Convert(rules map[string]*Rule, e *canal.RowsEvent) ([]elastic.BulkableRequ
 }
 
 // for insert and delete
-func convertAction(rule *Rule, action string, rows [][]interface{}) ([]elastic.BulkableRequest, error) {
+func convertAction(rule *config.Rule, action string, rows [][]interface{}) ([]elastic.BulkableRequest, error) {
 	reqs := make([]elastic.BulkableRequest, 0, len(rows))
 
 	for _, values := range rows {
@@ -77,15 +78,15 @@ func convertAction(rule *Rule, action string, rows [][]interface{}) ([]elastic.B
 	return reqs, nil
 }
 
-func convertInsert(rule *Rule, rows [][]interface{}) ([]elastic.BulkableRequest, error) {
+func convertInsert(rule *config.Rule, rows [][]interface{}) ([]elastic.BulkableRequest, error) {
 	return convertAction(rule, canal.InsertAction, rows)
 }
 
-func convertDelete(rule *Rule, rows [][]interface{}) ([]elastic.BulkableRequest, error) {
+func convertDelete(rule *config.Rule, rows [][]interface{}) ([]elastic.BulkableRequest, error) {
 	return convertAction(rule, canal.DeleteAction, rows)
 }
 
-func convertUpdate(rule *Rule, rows [][]interface{}) ([]elastic.BulkableRequest, error) {
+func convertUpdate(rule *config.Rule, rows [][]interface{}) ([]elastic.BulkableRequest, error) {
 	if len(rows) % 2 != 0 {
 		return nil, errors.Errorf("invalid update rows event, must have 2x rows, but %d", len(rows))
 	}
@@ -178,7 +179,7 @@ func convertColumnData(col *schema.TableColumn, value interface{}) interface{} {
 }
 
 
-func convertRow(rule *Rule, values []interface{}) map[string]interface{} {
+func convertRow(rule *config.Rule, values []interface{}) map[string]interface{} {
 	doc := make(map[string]interface{}, len(values))
 
 	for i, c := range rule.TableInfo.Columns {
@@ -188,7 +189,7 @@ func convertRow(rule *Rule, values []interface{}) map[string]interface{} {
 	return doc
 }
 
-func convertUpdateRow(rule *Rule, before []interface{}, after []interface{}) map[string]interface{} {
+func convertUpdateRow(rule *config.Rule, before []interface{}, after []interface{}) map[string]interface{} {
 	doc := make(map[string]interface{}, len(before))
 	for i, c := range rule.TableInfo.Columns {
 		if !reflect.DeepEqual(before[i], after[i]) {
@@ -199,7 +200,7 @@ func convertUpdateRow(rule *Rule, before []interface{}, after []interface{}) map
 	return doc
 }
 
-func convertField(rule *Rule, column *schema.TableColumn, value interface{}) (string, interface{}) {
+func convertField(rule *config.Rule, column *schema.TableColumn, value interface{}) (string, interface{}) {
 	v := convertColumnData(column, value)
 	for cname, s := range rule.FieldMapping {
 		if cname == column.Name {

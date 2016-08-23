@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/ehalpern/go-mysql/client"
+	"github.com/ehalpern/go-mysql-elasticsearch/config"
 	. "gopkg.in/check.v1"
 	"runtime/debug"
 	"gopkg.in/olivere/elastic.v3"
@@ -37,7 +38,7 @@ func (s *riverTestSuite) SetUpSuite(c *C) {
 	s.c, err = client.Connect(*my_addr, *my_user, *my_pass, "test")
 	c.Assert(err, IsNil)
 	if !*useRds {
-		s.testExecute(c, "SET SESSION binlog_format = 'ROW'")
+		s.dbExec(c, "SET SESSION binlog_format = 'ROW'")
 	}
 
 	s.setupTestTable(c, "test", "test_river")
@@ -46,28 +47,27 @@ func (s *riverTestSuite) SetUpSuite(c *C) {
 		s.setupTestTable(c, "test", table)
 	}
 
-	cfg := new(Config)
+	cfg := new(config.Config)
 	cfg.DbHost = *my_addr
 	cfg.DbUser = *my_user
 	cfg.DbPassword = *my_pass
 	cfg.EsHost = *es_addr
-	cfg.DbSlaveID = 1001
+	cfg.DbSlaveID = 2001
 	cfg.DataDir = "/tmp/test_river"
-	cfg.StatAddr = "127.0.0.1:12800"
 
 	os.RemoveAll(cfg.DataDir)
 
-	cfg.Sources = []SourceConfig{SourceConfig{Schema: "test", Tables: []string{"test_river", "test_river_[0-9]{4}"}}}
+	cfg.Sources = []config.SourceConfig{config.SourceConfig{Schema: "test", Tables: []string{"test_river", "test_river_[0-9]{4}"}}}
 
-	cfg.Rules = []*Rule{
-		&Rule{Schema: "test",
+	cfg.Rules = []*config.Rule{
+		&config.Rule{Schema: "test",
 			Table:        "test_river",
 			Index:        "river",
 			Type:         "river",
 			FieldMapping: map[string]string{"title": "es_title", "mylist": "es_mylist,list"},
 		},
 
-		&Rule{Schema: "test",
+		&config.Rule{Schema: "test",
 			Table:        "test_river_[0-9]{4}",
 			Index:        "river",
 			Type:         "river",
@@ -81,9 +81,9 @@ func (s *riverTestSuite) SetUpSuite(c *C) {
 	_, err = s.r.es.DeleteIndex("river").Do()
 }
 
-func (s *riverTestSuite) setupTestTable(c *C, dbName string, tableName string) {
-	s.testExecute(c, "CREATE DATABASE IF NOT EXISTS " + dbName)
-	fullName := dbName + "." + tableName
+func (s *riverTestSuite) setupTestTable(c *C, db string, table string) {
+	table = db + "." + table
+	s.dbExec(c, "CREATE DATABASE IF NOT EXISTS " + db)
 	schema := fmt.Sprintf(`
         CREATE TABLE IF NOT EXISTS %s (
             id INT,
@@ -92,11 +92,11 @@ func (s *riverTestSuite) setupTestTable(c *C, dbName string, tableName string) {
             mylist VARCHAR(256),
             tenum ENUM("e1", "e2", "e3"),
             tset SET("a", "b", "c"),
-            PRIMARY KEY(id)) ENGINE=INNODB;`, fullName)
+            PRIMARY KEY(id)) ENGINE=INNODB;`, table)
 
-	s.testExecute(c, "CREATE DATABASE IF NOT EXISTS " + dbName)
-	s.testExecute(c, "DROP TABLE IF EXISTS " + fullName)
-	s.testExecute(c, schema)
+	s.dbExec(c, "CREATE DATABASE IF NOT EXISTS " + db)
+	s.dbExec(c, "DROP TABLE IF EXISTS " + table)
+	s.dbExec(c, schema)
 }
 
 func (s *riverTestSuite) TearDownSuite(c *C) {
@@ -109,65 +109,20 @@ func (s *riverTestSuite) TearDownSuite(c *C) {
 	}
 }
 
-func (s *riverTestSuite) TestConfig(c *C) {
-	str := `
-db_host = "127.0.0.1:3306"
-db_user = "root"
-db_pass = ""
-
-es_host = "127.0.0.1:9200"
-
-data_dir = "./var"
-
-[[source]]
-schema = "test"
-
-tables = ["test_river", "test_river_[0-9]{4}"]
-
-[[rule]]
-schema = "test"
-table = "test_river"
-index = "river"
-type = "river"
-parent = "pid"
-
-    [rule.field]
-    title = "es_title"
-    mylist = "es_mylist,list"
-
-[[rule]]
-schema = "test"
-table = "test_river_[0-9]{4}"
-index = "river"
-type = "river"
-
-    [rule.field]
-    title = "es_title"
-    mylist = "es_mylist,list"
-
-`
-
-	cfg, err := NewConfig(str)
-	c.Assert(err, IsNil)
-	c.Assert(cfg.Sources, HasLen, 1)
-	c.Assert(cfg.Sources[0].Tables, HasLen, 2)
-	c.Assert(cfg.Rules, HasLen, 2)
-}
-
-func (s *riverTestSuite) testExecute(c *C, query string, args ...interface{}) {
+func (s *riverTestSuite) dbExec(c *C, query string, args ...interface{}) {
 	_, err := s.c.Execute(query, args...)
 	c.Assert(err, IsNil)
 }
 
 func (s *riverTestSuite) testPrepareData(c *C) {
-	s.testExecute(c, "INSERT INTO test_river (id, title, content, tenum, tset) VALUES (?, ?, ?, ?, ?)", 1, "first", "hello go 1", "e1", "a,b")
-	s.testExecute(c, "INSERT INTO test_river (id, title, content, tenum, tset) VALUES (?, ?, ?, ?, ?)", 2, "second", "hello mysql 2", "e2", "b,c")
-	s.testExecute(c, "INSERT INTO test_river (id, title, content, tenum, tset) VALUES (?, ?, ?, ?, ?)", 3, "third", "hello elaticsearch 3", "e3", "c")
-	s.testExecute(c, "INSERT INTO test_river (id, title, content, tenum, tset) VALUES (?, ?, ?, ?, ?)", 4, "fouth", "hello go-mysql-elasticserach 4", "e1", "a,b,c")
+	s.dbExec(c, "INSERT INTO test_river (id, title, content, tenum, tset) VALUES (?, ?, ?, ?, ?)", 1, "first", "hello go 1", "e1", "a,b")
+	s.dbExec(c, "INSERT INTO test_river (id, title, content, tenum, tset) VALUES (?, ?, ?, ?, ?)", 2, "second", "hello mysql 2", "e2", "b,c")
+	s.dbExec(c, "INSERT INTO test_river (id, title, content, tenum, tset) VALUES (?, ?, ?, ?, ?)", 3, "third", "hello elaticsearch 3", "e3", "c")
+	s.dbExec(c, "INSERT INTO test_river (id, title, content, tenum, tset) VALUES (?, ?, ?, ?, ?)", 4, "fouth", "hello go-mysql-elasticserach 4", "e1", "a,b,c")
 
 	for i := 0; i < 10; i++ {
 		table := fmt.Sprintf("test_river_%04d", i)
-		s.testExecute(c, fmt.Sprintf("INSERT INTO %s (id, title, content, tenum, tset) VALUES (?, ?, ?, ?, ?)", table), 5+i, "abc", "hello", "e1", "a,b,c")
+		s.dbExec(c, fmt.Sprintf("INSERT INTO %s (id, title, content, tenum, tset) VALUES (?, ?, ?, ?, ?)", table), 5+i, "abc", "hello", "e1", "a,b,c")
 	}
 }
 
@@ -215,19 +170,19 @@ func (s *riverTestSuite) TestRiver(c *C) {
 		c.Assert(source["es_title"], Equals, "abc")
 	}
 
-	s.testExecute(c, "UPDATE test_river SET title = ?, tenum = ?, tset = ?, mylist = ? WHERE id = ?", "second 2", "e3", "a,b,c", "a,b,c", 2)
-	s.testExecute(c, "DELETE FROM test_river WHERE id = ?", 1)
-	s.testExecute(c, "UPDATE test_river SET title = ?, id = ? WHERE id = ?", "second 30", 30, 3)
+	s.dbExec(c, "UPDATE test_river SET title = ?, tenum = ?, tset = ?, mylist = ? WHERE id = ?", "second 2", "e3", "a,b,c", "a,b,c", 2)
+	s.dbExec(c, "DELETE FROM test_river WHERE id = ?", 1)
+	s.dbExec(c, "UPDATE test_river SET title = ?, id = ? WHERE id = ?", "second 30", 30, 3)
 
 	// so we can insert invalid data
-	s.testExecute(c, `SET SESSION sql_mode="NO_ENGINE_SUBSTITUTION";`)
+	s.dbExec(c, `SET SESSION sql_mode="NO_ENGINE_SUBSTITUTION";`)
 
 	// bad insert
-	s.testExecute(c, "UPDATE test_river SET title = ?, tenum = ?, tset = ? WHERE id = ?", "second 2", "e5", "a,b,c,d", 4)
+	s.dbExec(c, "UPDATE test_river SET title = ?, tenum = ?, tset = ? WHERE id = ?", "second 2", "e5", "a,b,c,d", 4)
 
 	for i := 0; i < 10; i++ {
 		table := fmt.Sprintf("test_river_%04d", i)
-		s.testExecute(c, fmt.Sprintf("UPDATE %s SET title = ? WHERE id = ?", table), "hello", 5+i)
+		s.dbExec(c, fmt.Sprintf("UPDATE %s SET title = ? WHERE id = ?", table), "hello", 5+i)
 	}
 
 	c.Logf("Waiting for sync to complete")

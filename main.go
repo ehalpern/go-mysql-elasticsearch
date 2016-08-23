@@ -9,106 +9,133 @@ import (
 	"runtime"
 	"syscall"
 
+	"github.com/ehalpern/go-mysql-elasticsearch/config"
 	"github.com/ehalpern/go-mysql-elasticsearch/river"
 	"github.com/juju/errors"
 )
 
-var configFile = flag.String("config", "./etc/river.toml", "replication config file")
-var serviceOp = flag.String("service", "", "install|remove|[re]start|stop|status")
-var dbHost = flag.String("db_host", "", "DB host and port")
-var dbUser = flag.String("db_user", "", "DB user")
-var dbPass = flag.String("db_pass", "", "DB password")
-var dbSlaveId = flag.Int("db_slave_id", 0, "MySQL slave id")
-var esHost = flag.String("es_host", "", "Elasticsearch host and port")
-var esMaxActions = flag.Int("es_max_actions", 0, "maximum elasticsearch bulk update size")
-var dataDir = flag.String("data_dir", "", "path do store data")
+var options = struct {
+	help         bool
+	service      string
+	config       string
+	dataDir      string
+	dbHost       string
+	dbUser       string
+	dbPassword   string
+	dbSlaveID    int
+	esHost       string
+	esMaxActions int
+	reuseDump    string
+}{
+	flag.Bool("help", false, "show help"),
+	flag.String("service", "", "install|remove|[re]start|stop|status"),
+	flag.String("config", config.Default.ConfigFile, "config file"),
+	flag.String("data_dir", "", fmt.Sprintf("data directory (%s)", config.Default.DataDir)),
+	flag.String("db_host", "", fmt.Sprintf("DB host and port (%s)", config.Default.DbHost)),
+	flag.String("db_user", "", fmt.Sprintf("DB user (%s)", config.Default.DbUser)),
+	flag.String("db_pass", "", fmt.Sprintf("DB password (%s)", config.Default.DbPassword)),
+	flag.Int("db_slave_id", "", fmt.Sprintf("MySQL slave id (%s)", config.Default.DbSlaveID)),
+	flag.String("es_host", "", fmt.Sprintf("Elasticsearch host and port (%s)", config.Default.EsHost)),
+	flag.Int("es_max_actions", "", fmt.Sprintf("maximum elasticsearch bulk update size (%s)", config.Default.EsMaxActions)),
+	flag.String("use_dump", "", "use dump stored in this directory rather than generating new dump"),
+	flag.Bool("force_dump", "", "force dump database before resuming replciaton"),
+}
 
 func main() {
+	var status string
+	var err error
+
+	if *options.help {
+		flag.Usage()
+		os.Exit(0)
+	}
+	// ensure absolute path
+	if *options.config, err = filepath.Abs(*options.config); err != nil {
+		panic(err.Error())
+	}
+
+	if *options.service != "" {
+		status, err = invokeService(*options.service)
+	} else {
+		err = runNormally()
+	}
+	if err != nil {
+		errlog.Println("Error: ", err)
+		os.Exit(1)
+	} else {
+		fmt.Println(status)
+		os.Exit(0)
+	}
+}
+
+func invokeService(cmd string) (string, error) {
+	configFile, err := filepath.Abs(options.config)
+	if err {
+		return nil, err
+	}
+	s, err := NewService()
+	if err != nil {
+		return s, err
+	}
+
+	switch cmd {
+	case "install":
+		return s.Install("-config", configFile)
+	case "remove":
+		return s.Remove()
+	case "start":
+		return s.Start()
+	case "stop":
+		return s.Stop()
+	case "status":
+		return s.Status()
+	default:
+		return nil, errors.Errorf("unrecognized -service option " + cmd)
+	}
+}
+
+func runNormally() error {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	flag.Parse()
-
-	var status string
-	var err error
-
-	defer func() {
-		if err != nil {
-			errlog.Println("Error: ", err)
-			os.Exit(1)
-		} else {
-			fmt.Println(status)
-			os.Exit(0)
-		}
-	}()
-
-	absConfigFile, err := filepath.Abs(*configFile)
+	cfg, err := config.NewConfigWithFile(*options.config)
 	if err != nil {
-		return
+		return err
 	}
 
-	if *serviceOp != "" {
-		s, err := NewService()
-		if err != nil {
-			return
-		}
-		switch *serviceOp {
-		case "install":
-			status, err = s.Install("-config", absConfigFile)
-		case "remove":
-			status, err = s.Remove()
-		case "start":
-			status, err = s.Start()
-		case "stop":
-			status, err = s.Stop()
-		case "status":
-			status, err = s.Status()
-		default:
-			flag.Usage()
-			err = errors.Errorf("unrecognized -service option " + *serviceOp)
-		}
-		return
+	if len(*options.dbHost) > 0 {
+		cfg.DbHost = *options.dbHost
+	}
+	if len(*options.dbUser) > 0 {
+		cfg.DbUser = *options.dbUser
+	}
+	if len(*options.dbPassword) > 0 {
+		cfg.DbPassword = *options.dbPassword
+	}
+	if *options.dbSlaveID > 0 {
+		cfg.DbSlaveID = uint32(*options.dbSlaveID)
+	}
+	if len(*options.esHost) > 0 {
+		cfg.EsHost = *options.esHost
+	}
+	if len(*options.dataDir) > 0 {
+		cfg.DataDir = *options.dataDir
+	}
+	if *options.esMaxActions > 0 {
+		cfg.EsMaxActions = *options.esMaxActions
 	}
 
-	cfg, err := river.NewConfigWithFile(*configFile)
+	river, err := river.NewRiver(cfg)
 	if err != nil {
-		return
+		return err
 	}
 
-	if len(*dbHost) > 0 {
-		cfg.DbHost = *dbHost
-	}
-	if len(*dbUser) > 0 {
-		cfg.DbUser = *dbUser
-	}
-	if len(*dbPass) > 0 {
-		cfg.DbPassword = *dbPass
-	}
-	if *dbSlaveId > 0 {
-		cfg.DbSlaveID = uint32(*dbSlaveId)
-	}
-	if len(*esHost) > 0 {
-		cfg.EsHost = *esHost
-	}
-	if len(*dataDir) > 0 {
-		cfg.DataDir = *dataDir
-	}
-	if *esMaxActions > 0 {
-		cfg.EsMaxActions = *esMaxActions
-	}
-
-	r, err := river.NewRiver(cfg)
-
-	if err != nil {
-		return
-	}
-
-	if err = r.Run(); err != nil {
-		return
+	if err = river.Run(); err != nil {
+		return err
 	}
 
 	<-interrupt
-	r.Close()
+	river.Close()
+	return nil
 }
-

@@ -15,27 +15,28 @@ import (
 	"gopkg.in/olivere/elastic.v3"
 	"os"
 	"strings"
+	"github.com/ehalpern/go-mysql-elasticsearch/config"
 )
 
 // In Elasticsearch, river is a pluggable service within Elasticsearch pulling data then indexing it into Elasticsearch.
 // We use this definition here too, although it may not run within Elasticsearch.
 // Maybe later I can implement a acutal river in Elasticsearch, but I must learn java. :-)
 type River struct {
-	config *Config
+	config *config.Config
 	canal  *canal.Canal
-	rules  map[string]*Rule
+	rules  map[string]*config.Rule
 	quit   chan struct{}
 	wg     sync.WaitGroup
 	es     *elastic.Client
 	st     *stat
 }
 
-func NewRiver(c *Config) (*River, error) {
+func NewRiver(c *config.Config) (*River, error) {
 	r := new(River)
 	r.config = c
 	r.quit = make(chan struct{})
-	r.rules = make(map[string]*Rule)
-	r.st = &stat{r: r}
+	r.rules = make(map[string]*config.Rule)
+	//r.st = &stat{r: r}
 
 	if err := r.newCanal(); err != nil {
 		return nil, errors.Trace(err)
@@ -49,7 +50,7 @@ func NewRiver(c *Config) (*River, error) {
 		// We must use binlog full row image
 		return nil, errors.Trace(err)
 	}
-	go r.st.Run(r.config.StatAddr)
+	//go r.st.Run(r.config.StatAddr)
 	return r, nil
 }
 
@@ -91,7 +92,7 @@ func (r *River) prepareCanal() error {
 		r.canal.AddDumpDatabases(keys...)
 	}
 
-	s := syncer{r.st, r.rules, NewBulker(r.es, r.config.EsMaxActions)}
+	s := syncer{r.rules, NewBulker(r.es, r.config.EsMaxActions)}
 	r.canal.RegRowsEventHandler(&s)
 
 	return nil
@@ -104,7 +105,7 @@ func (r *River) newRule(schema, table string) error {
 		return errors.Errorf("duplicate source %s, %s defined in config", schema, table)
 	}
 
-	r.rules[key] = newDefaultRule(schema, table)
+	r.rules[key] = config.NewDefaultRule(schema, table)
 	return nil
 }
 
@@ -184,7 +185,7 @@ func (r *River) prepareRule() error {
 					return errors.Errorf("wildcard table rule %s.%s must have a index, can not empty", rule.Schema, rule.Table)
 				}
 
-				rule.prepare()
+				rule.Prepare()
 
 				for _, table := range tables {
 					rr := r.rules[ruleKey(rule.Schema, table)]
@@ -198,7 +199,7 @@ func (r *River) prepareRule() error {
 				if _, ok := r.rules[key]; !ok {
 					return errors.Errorf("rule %s, %s not defined in source", rule.Schema, rule.Table)
 				}
-				rule.prepare()
+				rule.Prepare()
 				r.rules[key] = rule
 			}
 		}
@@ -223,7 +224,7 @@ func ruleKey(schema string, table string) string {
 	return fmt.Sprintf("%s:%s", schema, table)
 }
 
-func readIndexFile(configDir string, rule *Rule) ([]byte, error) {
+func readIndexFile(configDir string, rule *config.Rule) ([]byte, error) {
 	if (rule.IndexFile != "") {
 		// Index file explicitly specified. Fail if not found.
 		path := rule.IndexFile

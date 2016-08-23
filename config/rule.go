@@ -1,11 +1,12 @@
-package river
+package config
 
 import (
-	"github.com/ehalpern/go-mysql/schema"
-"github.com/juju/errors"
-	"fmt"
-"github.com/ehalpern/go-mysql/canal"
 	"bytes"
+	"fmt"
+
+	"github.com/ehalpern/go-mysql/canal"
+	"github.com/ehalpern/go-mysql/schema"
+	"github.com/juju/errors"
 )
 
 // If you want to sync MySQL data into elasticsearch, you must set a rule to let use know how to do it.
@@ -28,7 +29,7 @@ type Rule struct {
 	TableInfo *schema.Table
 }
 
-func newDefaultRule(schema string, table string) *Rule {
+func NewDefaultRule(schema string, table string) *Rule {
 	r := new(Rule)
 
 	r.Schema = schema
@@ -40,7 +41,7 @@ func newDefaultRule(schema string, table string) *Rule {
 	return r
 }
 
-func (r *Rule) prepare() error {
+func (r *Rule) Prepare() error {
 	if r.FieldMapping == nil {
 		r.FieldMapping = make(map[string]string)
 	}

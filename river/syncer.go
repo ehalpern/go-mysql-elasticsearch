@@ -4,11 +4,11 @@ import (
 	"github.com/juju/errors"
 	"github.com/ehalpern/go-mysql/canal"
 	"github.com/siddontang/go/log"
+	"github.com/ehalpern/go-mysql-elasticsearch/config"
 )
 
 type syncer struct {
-	status *stat
-	rules  map[string]*Rule
+	rules  map[string]*config.Rule
 	bulker *Bulker
 }
 
