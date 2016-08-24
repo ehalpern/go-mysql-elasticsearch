@@ -6,36 +6,38 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const esidx = "estest"
-const estype = "estest"
+const (
+	estestIndex = "estest"
+	estestType = "estest"
+)
 
 func TestGetDocument(t *testing.T) {
-	es := newEsTestClient(t).recreateIndex(esidx)
+	es := newEsTestClient(t).recreateIndex(estestIndex)
 	id := "1"
 	doc := map[string]interface{} { "name": id }
-	es.putDocument(esidx, estype, id, "", doc)
-	returned := es.getDocumentMap(esidx, estype, id, "")
+	es.putDocument(estestIndex, estestType, id, "", doc)
+	returned := es.getDocumentMap(estestIndex, estestType, id, "")
 	assert.ObjectsAreEqual(doc, returned)
 }
 
 func TestGetMissingDocument(t *testing.T) {
-	es := newEsTestClient(t).recreateIndex(esidx)
-	returned := es.getDocumentMap(esidx, estype, "1", "")
+	es := newEsTestClient(t).recreateIndex(estestIndex)
+	returned := es.getDocumentMap(estestIndex, estestType, "1", "")
 	assert.Nil(t, returned)
 }
 
 func TestSearchMatchAll(t *testing.T) {
-	es := newEsTestClient(t).recreateIndex(esidx)
+	es := newEsTestClient(t).recreateIndex(estestIndex)
 	id := "1"
 	doc := map[string]interface{} { "name": id }
-	es.putDocument(esidx, estype, id, "", doc).refresh(esidx)
-	result := es.searchMatchAll(esidx)
+	es.putDocument(estestIndex, estestType, id, "", doc).refresh(estestIndex)
+	result := es.searchMatchAll(estestIndex)
 	hits := result.TotalHits()
 	assert.Equal(t, int64(1), hits)
 }
 
 func TestParentAndChild(t *testing.T) {
-	esChildType := estype + "child"
+	esChildType := estestType + "child"
 	settings := map[string]interface{} {
 		"mappings": map[string]interface{} {
 			esChildType: map[string]interface{} {
@@ -49,14 +51,14 @@ func TestParentAndChild(t *testing.T) {
 		},
 	}
 	es := newEsTestClient(t).
-		recreateIndex(esidx).
-		recreateIndexWithSettings(esidx, settings)
+		recreateIndex(estestIndex).
+		recreateIndexWithSettings(estestIndex, settings)
 	id := "1"
 	doc := map[string]interface{} { "name": id }
 	childDoc := map[string]interface{} { "name": id, "parent": id }
-	es.putDocument(esidx, estype, id, "", doc).refresh(esidx)
-	es.putDocument(esidx, esChildType, id, id, childDoc).refresh(esidx)
-	result := es.searchMatchAll(esidx)
+	es.putDocument(estestIndex, estestType, id, "", doc).refresh(estestIndex)
+	es.putDocument(estestIndex, esChildType, id, id, childDoc).refresh(estestIndex)
+	result := es.searchMatchAll(estestIndex)
 	hits := result.TotalHits()
 	assert.Equal(t, int64(2), hits)
 }
