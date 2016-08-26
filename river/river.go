@@ -4,21 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	//stdlog "log"
+	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/juju/errors"
 	"github.com/ehalpern/go-mysql/canal"
 	"github.com/siddontang/go/log"
-	"gopkg.in/olivere/elastic.v3"
-	"os"
-	"strings"
 	"github.com/ehalpern/go-mysql-elasticsearch/config"
+	"gopkg.in/olivere/elastic.v3"
 )
 
-// In Elasticsearch, river is a pluggable service within Elasticsearch pulling data then indexing it into Elasticsearch.
+// In Elasticsearch, river is a plugable service within Elasticsearch pulling data then indexing it into Elasticsearch.
 // We use this definition here too, although it may not run within Elasticsearch.
 // Maybe later I can implement a acutal river in Elasticsearch, but I must learn java. :-)
 type River struct {
@@ -36,21 +35,19 @@ func NewRiver(c *config.Config) (*River, error) {
 	r.config = c
 	r.quit = make(chan struct{})
 	r.rules = make(map[string]*config.Rule)
-	//r.st = &stat{r: r}
 
 	if err := r.newCanal(); err != nil {
-		return nil, errors.Trace(err)
+		return nil, err
 	} else if err = r.prepareRule(); err != nil {
-		return nil, err //errors.Trace(err)
+		return nil, err
 	} else if r.es, err = elastic.NewClient(elastic.SetURL("http://" + r.config.EsHost)); err != nil {
 		return nil, err
 	} else if err := r.prepareCanal(); err != nil {
-		return nil, errors.Trace(err)
+		return nil, err
 	} else if err = r.canal.CheckBinlogRowImage("FULL"); err != nil {
 		// We must use binlog full row image
-		return nil, errors.Trace(err)
+		return nil, err
 	}
-	//go r.st.Run(r.config.StatAddr)
 	return r, nil
 }
 
@@ -66,7 +63,7 @@ func (r *River) newCanal() error {
 	cfg.Dump.DiscardErr = false
 	var err error
 	r.canal, err = canal.NewCanal(cfg)
-	return errors.Trace(err)
+	return err
 }
 
 func (r *River) prepareCanal() error {
@@ -131,14 +128,14 @@ func (r *River) parseSource() (map[string][]string, error) {
 
 				res, err := r.canal.Execute(sql)
 				if err != nil {
-					return nil, errors.Trace(err)
+					return nil, err
 				}
 
 				for i := 0; i < res.Resultset.RowNumber(); i++ {
 					f, _ := res.GetString(i, 0)
 					err := r.newRule(s.Schema, f)
 					if err != nil {
-						return nil, errors.Trace(err)
+						return nil, err
 					}
 
 					tables = append(tables, f)
@@ -148,7 +145,7 @@ func (r *River) parseSource() (map[string][]string, error) {
 			} else {
 				err := r.newRule(s.Schema, table)
 				if err != nil {
-					return nil, errors.Trace(err)
+					return nil, err
 				}
 			}
 		}
@@ -164,7 +161,7 @@ func (r *River) parseSource() (map[string][]string, error) {
 func (r *River) prepareRule() error {
 	wildtables, err := r.parseSource()
 	if err != nil {
-		return errors.Trace(err)
+		return err
 	}
 
 	if r.config.Rules != nil {
@@ -207,7 +204,7 @@ func (r *River) prepareRule() error {
 
 	for _, rule := range r.rules {
 		if rule.TableInfo, err = r.canal.GetTable(rule.Schema, rule.Table); err != nil {
-			return err // errors.Trace(err)
+			return err
 		}
 
 		// table must have a PK for one column, multi columns may be supported later.
@@ -262,7 +259,7 @@ func (r *River) createIndexes() error {
 		} else if len(data) > 0 {
 			var settings map[string]interface{}
 			if err := json.Unmarshal(data, &settings); err != nil {
-				return errors.Trace(err)
+				return err
 			}
 			if err := r.createIndex(rule.Index, settings); err != nil {
 				return err
@@ -285,10 +282,10 @@ func (r *River) createIndex(idx string, settings map[string]interface{}) error {
 
 func (r *River) Run() error {
 	if err := r.createIndexes(); err != nil {
-		return errors.Trace(err)
+		return err
 	}
 	if err := r.canal.Start(); err != nil {
-		return errors.Trace(err)
+		return err
 	}
 	return nil
 }
@@ -296,8 +293,6 @@ func (r *River) Run() error {
 func (r *River) Close() {
 	log.Infof("Closing river")
 	close(r.quit)
-
 	r.canal.Close()
-
 	r.wg.Wait()
 }
