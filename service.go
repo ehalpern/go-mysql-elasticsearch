@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ehalpern/go-mysql-elasticsearch/config"
+	"github.com/ehalpern/mysql2es/config"
 	"github.com/takama/daemon"
 )
 

@@ -11,7 +11,7 @@ import (
 
 	"github.com/ehalpern/go-mysql/canal"
 	"github.com/siddontang/go/log"
-	"github.com/ehalpern/go-mysql-elasticsearch/config"
+	"github.com/ehalpern/mysql2es/config"
 	"gopkg.in/olivere/elastic.v3"
 )
 

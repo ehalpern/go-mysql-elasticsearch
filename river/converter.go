@@ -6,7 +6,7 @@ import (
 
 	"github.com/ehalpern/go-mysql/canal"
 	"github.com/ehalpern/go-mysql/schema"
-	"github.com/ehalpern/go-mysql-elasticsearch/config"
+	"github.com/ehalpern/mysql2es/config"
 	"github.com/juju/errors"
 	"github.com/siddontang/go/log"
 

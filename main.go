@@ -9,8 +9,8 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/ehalpern/go-mysql-elasticsearch/config"
-	"github.com/ehalpern/go-mysql-elasticsearch/river"
+	"github.com/ehalpern/mysql2es/config"
+	"github.com/ehalpern/mysql2es/river"
 	"github.com/juju/errors"
 )
 
