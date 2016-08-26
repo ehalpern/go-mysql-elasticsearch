@@ -26,8 +26,8 @@ It includes the following enhancements:
     + Instructions for [Debian](https://github.com/golang/go/wiki/Ubuntu)
     + On OSX, run `brew install go`
     + For other platforms, see the [Official Documentation](https://golang.org/doc/install)
-+ Run `go get github.com/ehalpern/go-mysql-elasticsearch`
-+ Run `go install github.com/ehalpern/go-mysql-elasticsearch`
++ Run `go get github.com/ehalpern/mysql2es`
++ Run `go install github.com/ehalpern/mysql2es`
 + Install mydumper 0.9.1 (https://launchpad.net/ubuntu/+source/mydumper)
 
 ## How to use?
@@ -49,7 +49,7 @@ It includes the following enhancements:
 
 ## Source
 
-In go-mysql-elasticsearch, you must decide which tables you want to sync into elasticsearch in the source config.
+In mysql2es, you must decide which tables you want to sync into elasticsearch in the source config.
 
 The format in config file is below:
 
