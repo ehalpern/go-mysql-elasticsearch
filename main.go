@@ -68,13 +68,13 @@ func main() {
 }
 
 func invokeService(cmd string) (string, error) {
-	configFile, err := filepath.Abs(options.config)
-	if err {
-		return nil, err
+	configFile, err := filepath.Abs(*options.config)
+	if err != nil {
+		return "", err
 	}
 	s, err := NewService()
 	if err != nil {
-		return s, err
+		return "", err
 	}
 
 	switch cmd {
@@ -89,7 +89,7 @@ func invokeService(cmd string) (string, error) {
 	case "status":
 		return s.Status()
 	default:
-		return nil, errors.Errorf("unrecognized -service option " + cmd)
+		return "", errors.Errorf("unrecognized -service option " + cmd)
 	}
 }
 

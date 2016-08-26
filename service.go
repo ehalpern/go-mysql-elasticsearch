@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/ehalpern/go-mysql-elasticsearch/config"
 	"github.com/takama/daemon"
-	"github.com/ehalpern/go-mysql-elasticsearch/river"
 )
 
 var stdlog, errlog *log.Logger
@@ -16,7 +16,7 @@ type Service struct {
 }
 
 func NewService() (*Service, error) {
-	daemon, err := daemon.New(river.ServiceName, river.ServiceDesc)
+	daemon, err := daemon.New(config.ServiceName, config.ServiceDesc)
 	if err != nil {
 		return nil, err
 	}
