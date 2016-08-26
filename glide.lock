@@ -1,5 +1,5 @@
 hash: c632e4649150211f3b1b70d94c3ccdcbbe0f588a845242896b17ce90851e073d
-updated: 2016-08-26T14:34:30.012860056-07:00
+updated: 2016-08-26T15:57:32.883156514-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: ""
@@ -8,13 +8,13 @@ imports:
   subpackages:
   - spew
 - name: github.com/juju/errors
-  version: fd09cfc46bee3678f38eb90cb2b37ebdc9d36619
+  version: 7d271cc3a6ee9bc007dcb1fb8e1ce2b9ae86ef75
 - name: github.com/pmezard/go-difflib
   version: ""
   subpackages:
   - difflib
 - name: github.com/siddontang/go
-  version: fd09cfc46bee3678f38eb90cb2b37ebdc9d36619
+  version: 7d271cc3a6ee9bc007dcb1fb8e1ce2b9ae86ef75
   subpackages:
   - log
   - sync2
@@ -24,7 +24,7 @@ imports:
   - assert
   - require
 - name: github.com/takama/daemon
-  version: fd09cfc46bee3678f38eb90cb2b37ebdc9d36619
+  version: 7d271cc3a6ee9bc007dcb1fb8e1ce2b9ae86ef75
   repo: git@github.com:ehalpern/daemon.git
 - name: gopkg.in/olivere/elastic.v3
   version: ""
