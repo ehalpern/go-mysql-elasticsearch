@@ -2,10 +2,6 @@ package: github.com/ehalpern/mysql2es
 import:
 - package: github.com/BurntSushi/toml
   version: ~0.2.0
-- package: github.com/ehalpern/go-mysql
-  subpackages:
-  - canal
-  - schema
 - package: github.com/juju/errors
 - package: github.com/siddontang/go
   subpackages:
