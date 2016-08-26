@@ -44,6 +44,7 @@ func main() {
 	var status string
 	var err error
 
+	flag.Parse()
 	if *options.help {
 		flag.Usage()
 		os.Exit(0)
