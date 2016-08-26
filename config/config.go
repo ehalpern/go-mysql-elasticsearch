@@ -31,7 +31,7 @@ type SourceConfig struct {
 }
 
 var Default = Config {
-	"/etc/" + ServiceName + "/" + ServiceName + ".toiml",
+	"/etc/" + ServiceName + "/" + ServiceName + ".toml",
 	"/var/lib/" + ServiceName,
 	"127.0.0.1:3306",
 	"root",
