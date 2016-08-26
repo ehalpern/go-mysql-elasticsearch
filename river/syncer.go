@@ -8,7 +8,7 @@ import (
 )
 
 type syncer struct {
-	rules  map[string]*config.Rule
+	rules  *config.Runtime
 	bulker *Bulker
 }
 
@@ -27,11 +27,11 @@ func (s *syncer) Do(e *canal.RowsEvent) error {
 }
 
 func (s *syncer) ignoreEvent(e *canal.RowsEvent) bool {
-	_, ok := s.rules[ruleKey(e.Table.Schema, e.Table.Name)]
-	if !ok {
-		log.Debugf("Ignoring event for table not configured for replication: %v", ruleKey(e.Table.Schema, e.Table.Name))
+	ignore := s.rules.GetRule(e.Table.Schema, e.Table.Name) == nil
+	if ignore {
+		log.Debugf("Ignoring event for table not configured for replication: %s.%s", e.Table.Schema, e.Table.Name)
 	}
-	return !ok
+	return ignore
 }
 
 func (s *syncer) Complete() error {

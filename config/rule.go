@@ -57,6 +57,7 @@ func (r *Rule) Prepare() error {
 	return nil
 }
 
+
 // Returns a doc id synthesized by concatenating all primary key values in the row.
 // The resulting id will have the form pk1[:pk2[...]]
 func (r *Rule) DocId(row []interface{}) (string, error) {

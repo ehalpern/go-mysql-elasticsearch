@@ -22,11 +22,10 @@ const (
 )
 
 // Converts database replication row events to elasticsearch bulk actions
-func Convert(rules map[string]*config.Rule, e *canal.RowsEvent) ([]elastic.BulkableRequest, error) {
-	key := ruleKey(e.Table.Schema, e.Table.Name)
-	rule, ok := rules[key]
-	if !ok {
-		return nil, errors.Errorf("no rule found for %v", key )
+func Convert(rules *config.Runtime, e *canal.RowsEvent) ([]elastic.BulkableRequest, error) {
+	rule := rules.GetRule(e.Table.Schema, e.Table.Name)
+	if rule == nil {
+		return nil, errors.Errorf("no rule found for %s.%s", e.Table.Schema, e.Table.Name )
 	}
 
 	log.Debugf("Converting %v", rule)

@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 
 	"github.com/BurntSushi/toml"
-	"github.com/juju/errors"
 )
 
 const (
@@ -48,7 +47,7 @@ var Default = Config {
 func NewConfigWithFile(name string) (*Config, error) {
 	data, err := ioutil.ReadFile(name)
 	if err != nil {
-		return nil, errors.Trace(err)
+		return nil, err
 	}
 
 	c, err := NewConfig(string(data));
@@ -69,4 +68,3 @@ func NewConfig(data string) (*Config, error) {
 	}
 	return &c, nil
 }
-
