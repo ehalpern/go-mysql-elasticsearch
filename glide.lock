@@ -7,16 +7,6 @@ imports:
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
-- name: github.com/ehalpern/go-mysql
-  version: 4496880e56ac1c81393590de3067b8d0bdafdcbe
-  subpackages:
-  - canal
-  - schema
-  - client
-  - dump
-  - mysql
-  - replication
-  - packet
 - name: github.com/juju/errors
   version: 6f54ff6318409d31ff16261533ce2c8381a4fd5d
 - name: github.com/pmezard/go-difflib
