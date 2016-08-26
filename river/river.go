@@ -41,7 +41,7 @@ func NewRiver(c *config.Config) (*River, error) {
 	if err := r.newCanal(); err != nil {
 		return nil, errors.Trace(err)
 	} else if err = r.prepareRule(); err != nil {
-		return nil, errors.Trace(err)
+		return nil, err //errors.Trace(err)
 	} else if r.es, err = elastic.NewClient(elastic.SetURL("http://" + r.config.EsHost)); err != nil {
 		return nil, err
 	} else if err := r.prepareCanal(); err != nil {
@@ -207,7 +207,7 @@ func (r *River) prepareRule() error {
 
 	for _, rule := range r.rules {
 		if rule.TableInfo, err = r.canal.GetTable(rule.Schema, rule.Table); err != nil {
-			return errors.Trace(err)
+			return err // errors.Trace(err)
 		}
 
 		// table must have a PK for one column, multi columns may be supported later.

@@ -6,27 +6,45 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"runtime/debug"
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
-
 	. "gopkg.in/check.v1"
+
+	"strings"
 
 	"github.com/ehalpern/go-mysql-elasticsearch/config"
 	"gopkg.in/olivere/elastic.v3"
 )
 
 const (
-	tSchema = "test"
-	tTable = "test_river"
-	tIndex = "river"
-    tType = "river"
+	tDB           = "river_test"
+	tIndex        = tDB
+	tTable        = "river"
+	tType         = tTable
+	tIgnoredTable = tTable + "_ignored"
+	tChildTable   = tTable + "_child"
+	tChildType    = tChildTable
 )
 
 func tTable_(n int) string {
-	return fmt.Sprintf(tTable +"_%04d", n)
+	return fmt.Sprintf(tTable+"_%04d", n)
 }
+
+const (
+	idField     = "id"
+	parentField = "parent"
+)
+
+var (
+	fields = []string{idField, "title", "content", "tenum", "tset"}
+	values = [][]interface{}{
+		{1, "1st", "hello 1", "e1", "a"},
+		{2, "2nd", "hello 2", "e2", "a,b"},
+		{3, "3rd", "hello 3", "e3", "a,b,c"},
+		{4, "4th", "hello 4", "e1", "b,c"},
+	}
+)
 
 var my_addr = flag.String("my_host", "127.0.0.1:3306", "MySQL addr")
 var my_user = flag.String("my_user", "root", "MySQL user")
@@ -47,48 +65,70 @@ type riverTestSuite struct {
 var _ = Suite(&riverTestSuite{})
 
 func (s *riverTestSuite) SetUpSuite(c *C) {
-	debug.SetTraceback("all")
 	var err error
-	s.db, err = sql.Open("mysql", *my_user+":"+*my_pass+"@tcp("+*my_addr+")/"+ tSchema)
+	s.db, err = sql.Open("mysql", *my_user+":"+*my_pass+"@tcp("+*my_addr+")/"+tDB)
 	c.Assert(err, IsNil)
+	s.dbExec(c, "CREATE DATABASE IF NOT EXISTS "+tDB)
 	if !*useRds {
 		s.dbExec(c, "SET SESSION binlog_format = 'ROW'")
 	}
-
-	s.dbCreate(c, tSchema, tTable)
-	for i := 0; i < 10; i++ {
-		s.dbCreate(c, tSchema, tTable_(i))
+	schema := `(
+		id INT,
+		title VARCHAR(256),
+		content VARCHAR(256),
+		mylist VARCHAR(256),
+		tenum ENUM("e1", "e2", "e3"),
+		tset SET("a", "b", "c"),
+		parent INT,
+		PRIMARY KEY(id)
+	) ENGINE=INNODB
+	`
+	s.dbCreate(c, tDB, schema, tTable)
+	s.dbCreate(c, tDB, schema, tIgnoredTable)
+	s.dbCreate(c, tDB, schema, tChildTable)
+	for i := 0; i < len(values); i++ {
+		s.dbCreate(c, tDB, schema, tTable_(i))
 	}
 
-	s.r = s.riverCreate(c, `
-		db_host = "`+*my_addr+`"
-		db_user = "`+*my_user+`"
-		db_password = "`+*my_pass+`"
-		es_host = "`+*es_addr+`"
+	config := `
+		db_host = "` + *my_addr + `"
+		db_user = "` + *my_user + `"
+		db_password = "` + *my_pass + `"
+		es_host = "` + *es_addr + `"
 		data_dir = "/tmp/mysql2es/test"
 
 		[[source]]
-			schema = "test"
-			tables = ["test_river", "test_river_[0-9]{4}"]
+			schema = "` + tDB + `"
+			tables = ["` + tTable + `", "` + tTable + `_[0-3]{4}", "` + tChildTable + `"]
 			[[rule]]
-				schema = "test"
-				table = "test_river"
-				index = "river"
-				type  = "river"
-				[rule.field]
-					title = "es_title"
-					mylist = "es_mylist,list"
+				schema = "` + tDB + `"
+				index = "` + tIndex + `"
+				table = "` + tTable + `"
+				type  = "` + tType + `"
 			[[rule]]
-				schema = "test"
-				table = "test_river_[0-9]{4}"
-				index = "river"
-				type  = "river"
-				[rule.field]
-					title = "es_title"
-					mylist = "es_mylist,list"
-	`)
+				schema = "` + tDB + `"
+				index = "` + tIndex + `"
+				table = "` + tTable + `_[0-3]{4}"
+				type  = "` + tType + `"
+			[[rule]]
+				schema = "` + tDB + `"
+				index = "` + tIndex + `"
+				table = "` + tChildTable + `"
+				type  = "` + tChildType + `"
+				parent = "` + parentField + `"
+	`
+	s.r = s.riverCreate(c, config)
 
 	_, err = s.r.es.DeleteIndex(tIndex).Do()
+	mapping := map[string]interface{}{
+		"mappings": map[string]interface{}{
+			tChildType: map[string]interface{}{
+				"_parent": map[string]string{"type": tType},
+			},
+		},
+	}
+	_, err = s.r.es.CreateIndex(tIndex).BodyJson(mapping).Do()
+	c.Assert(err, IsNil)
 }
 
 func (s *riverTestSuite) TearDownSuite(c *C) {
@@ -100,119 +140,141 @@ func (s *riverTestSuite) TearDownSuite(c *C) {
 	}
 }
 
-
-
-func (s *riverTestSuite) TestRiver(c *C) {
-	s.dbInsertData(c)
+func (s *riverTestSuite) TestDumpAndReplication(c *C) {
+	// Dump first 2 rows
+	rowsToDump := values[:2]
+	for _, r := range rowsToDump {
+		s.dbInsert(c, tTable, fields, r)
+	}
 	s.riverRun(c)
-
-	r, source := s.esGet(c, "1")
-	c.Assert(r.Found, Equals, true)
-
-	c.Assert(source["tenum"], Equals, "e1")
-	c.Assert(source["tset"], Equals, "a,b")
-
-	r, doc := s.esGet(c, "100")
-	c.Assert(doc, IsNil)
-
-	for i := 0; i < 10; i++ {
-		id := fmt.Sprintf("%d", 5+i)
-		r, source = s.esGet(c, id)
-		c.Assert(r.Found, Equals, true)
-		c.Assert(source["es_title"], Equals, id + "th")
+	for _, r := range rowsToDump {
+		s.esVerify(c, tIndex, tType, fields, r)
 	}
 
-	s.dbExec(c, "UPDATE "+ tTable +" SET title = ?, tenum = ?, tset = ?, mylist = ? WHERE id = ?", "second 2", "e3", "a,b,c", "a,b,c", 2)
-	s.dbExec(c, "DELETE FROM "+ tTable +" WHERE id = ?", 1)
-	s.dbExec(c, "UPDATE "+ tTable +" SET title = ?, id = ? WHERE id = ?", "second 30", 30, 3)
-
-	// so we can insert invalid data
-	s.dbExec(c, `SET SESSION sql_mode="NO_ENGINE_SUBSTITUTION";`)
-
-	// bad insert
-	s.dbExec(c, "UPDATE "+ tTable +" SET title = ?, tenum = ?, tset = ? WHERE id = ?", "second 2", "e5", "a,b,c,d", 4)
-
-	for i := 0; i < 10; i++ {
-		s.dbExec(c, "UPDATE "+ tTable_(i)+" SET title = ? WHERE id = ?", "hello", 5+i)
+	// Replicate 2nd 2 rows
+	rowsToReplicate := values[2:]
+	for _, r := range rowsToReplicate {
+		s.dbInsert(c, tTable, fields, r)
 	}
-
 	s.riverWaitForSync(c)
-
-	r, source = s.esGet(c, "1")
-	c.Assert(source, IsNil)
-
-	r, source = s.esGet(c, "2")
-	c.Assert(r.Found, Equals, true)
-	c.Assert(source["es_title"], Equals, "second 2")
-	c.Assert(source["tenum"], Equals, "e3")
-	c.Assert(source["tset"], Equals, "a,b,c")
-	c.Assert(source["es_mylist"], DeepEquals, []interface{}{"a", "b", "c"})
-
-	r, source = s.esGet(c, "4")
-	c.Assert(r.Found, Equals, true)
-	c.Assert(source["tenum"], Equals, "")
-	c.Assert(source["tset"], Equals, "a,b,c")
-
-	r, source = s.esGet(c, "3")
-	c.Assert(source, IsNil)
-
-	r, source = s.esGet(c, "30")
-	c.Assert(r.Found, Equals, true)
-	c.Assert(source["es_title"], Equals, "second 30")
-
-	for i := 0; i < 10; i++ {
-		r, source = s.esGet(c, fmt.Sprintf("%d", 5+i))
-		c.Assert(r.Found, Equals, true)
-		c.Assert(source["es_title"], Equals, "hello")
+	for _, r := range rowsToReplicate {
+		s.esVerify(c, tIndex, tType, fields, r)
 	}
 }
 
+func (s *riverTestSuite) TestUpdate(c *C) {
+	s.riverRun(c)
+	s.dbInsert(c, tTable, fields, values[0])
 
-func (s *riverTestSuite) dbCreate(c *C, db string, tables ...string) {
-	s.dbExec(c, "CREATE DATABASE IF NOT EXISTS " + db)
+	updatedRow := make([]interface{}, len(values[0]))
+	copy(updatedRow, values[0])
+
+	updateFields := fields[:2]
+	updatedRow[1] = "1st-prime"
+	c.Logf("updatedRow: %v", updatedRow)
+	updateValues := updatedRow[:2]
+	s.dbUpdate(c, tTable, updateFields, updateValues)
+	s.riverWaitForSync(c)
+	s.esVerify(c, tIndex, tType, fields, updatedRow)
+}
+
+func (s *riverTestSuite) TestDelete(c *C) {
+	s.riverRun(c)
+	row := values[0]
+	s.dbInsert(c, tTable, fields, row)
+	key := s.fieldMap(fields, row)[idField]
+	s.dbDelete(c, tTable, idField, key)
+	s.riverWaitForSync(c)
+	_, doc := s.esGet(c, tIndex, tType, key, "")
+	c.Assert(doc, IsNil)
+}
+
+func (s *riverTestSuite) TestTableWildcards(c *C) {
+	for i, row := range values {
+		s.dbInsert(c, tTable_(i), fields, row)
+	}
+	s.riverRun(c)
+	s.riverWaitForSync(c)
+	for _, row := range values {
+		s.esVerify(c, tIndex, tType, fields, row)
+	}
+}
+
+func (s *riverTestSuite) TestSchemaUpgrade(c *C) {
+	row := values[0]
+	s.dbInsert(c, tTable, fields, row)
+	s.riverRun(c)
+	fm := s.fieldMap(fields, values[0])
+	s.dbExec(c, "ALTER TABLE "+tTable+" ADD new VARCHAR(256) DEFAULT 'not-set'")
+	s.dbUpdate(c, tTable, []string{idField, "new"}, []interface{}{fm[idField], "set"})
+	s.riverWaitForSync(c)
+	_, doc := s.esGet(c, tIndex, tType, fm[idField], "")
+	c.Assert(doc, NotNil)
+	c.Assert(doc["new"], Equals, "set")
+	// TODO: Make sure inserting into ignored tables doesn't break anything
+}
+
+func (s *riverTestSuite) TestDocWithParent(c *C) {
+	s.riverRun(c)
+	parentRow := values[0]
+	s.dbInsert(c, tTable, fields, parentRow)
+	// Add 'parent' field to the child field list
+	childFields := make([]string, len(fields))
+	copy(childFields, fields)
+	childFields = append(childFields, parentField)
+	// Add parent id to the child row
+	childRow := make([]interface{}, len(parentRow))
+	copy(childRow, parentRow)
+	childRow = append(childRow, parentRow[0])
+	s.dbInsert(c, tChildTable, childFields, childRow)
+	s.riverWaitForSync(c)
+	s.esVerify(c, tIndex, tChildType, childFields, childRow)
+}
+
+func (s *riverTestSuite) dbCreate(c *C, db string, schema string, tables ...string) {
 	for _, table := range tables {
 		t := db + "." + table
-		s.dbExec(c, "DROP TABLE IF EXISTS " + t)
-		s.dbExec(c, `CREATE TABLE IF NOT EXISTS ` + t + `(
-						id INT,
-						title VARCHAR(256),
-						content VARCHAR(256),
-						mylist VARCHAR(256),
-						tenum ENUM("e1", "e2", "e3"),
-						tset SET("a", "b", "c"),
-						PRIMARY KEY(id)) ENGINE=INNODB;`)
-	}
-}
-
-func (s *riverTestSuite) dbInsertData(c *C) {
-	values := []string{
-		`1, '1st', 'hello 1', 'e1', 'a,b'`,
-		`2, '2nd', 'hello 2', 'e2', 'b,c'`,
-		`3, '3rd', 'hello 3', 'e3', 'c'`,
-		`4, '4th', 'hello 4', 'e1', 'a,b,c'`,
-	}
-
-	for _, v := range values {
-		s.dbExec(c, "INSERT INTO "+ tTable +" (id, title, content, tenum, tset) VALUES (" + v + ")")
-	}
-
-	for i := 0; i < 10; i++ {
-		row := i + 5
-		v := fmt.Sprintf("%d, '%dth', 'hello %d', 'e1', 'a,b,c'", row, row, row)
-		s.dbExec(c, "INSERT INTO "+ tTable_(i)+" (id, title, content, tenum, tset) VALUES ("+v+")")
+		s.dbExec(c, "DROP TABLE IF EXISTS "+t)
+		s.dbExec(c, "CREATE TABLE IF NOT EXISTS "+t+" "+schema+";")
 	}
 }
 
 func (s *riverTestSuite) dbExec(c *C, query string, args ...interface{}) {
+	c.Logf("Executing '%s (%v)'", query, args)
 	_, err := s.db.Exec(query, args...)
 	if err != nil {
-		c.Errorf("Error executing '%s': %v", query, err)
+		c.Errorf("Error executing '%s (%v)': %v", query, args, err)
 	}
 }
 
-func (s *riverTestSuite) esGet(c *C, id string) (*elastic.GetResult, map[string]interface{}) {
+func (s *riverTestSuite) dbInsert(c *C, table string, fields []string, values []interface{}) {
+	placeholders := []string{}
+	for range values {
+		placeholders = append(placeholders, "?")
+	}
+	stmnt := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
+		table, strings.Join(fields, ","), strings.Join(placeholders, ","))
+	s.dbExec(c, stmnt, values...)
+}
+
+func (s *riverTestSuite) dbUpdate(c *C, table string, fields []string, values []interface{}) {
+	assignments := []string{}
+	for _, f := range fields[1:] {
+		assignments = append(assignments, fmt.Sprintf("%s = ?", f))
+	}
+	u := fmt.Sprintf("UPDATE %s SET %s WHERE %s = %v",
+		table, strings.Join(assignments, ","), fields[0], values[0])
+	s.dbExec(c, u, values[1:]...)
+}
+
+func (s *riverTestSuite) dbDelete(c *C, table string, keyField string, key interface{}) {
+	stmnt := fmt.Sprintf("DELETE FROM %s WHERE %s = ?", table, keyField)
+	s.dbExec(c, stmnt, key)
+}
+
+func (s *riverTestSuite) esGet(c *C, idx string, typ string, id interface{}, parent interface{}) (*elastic.GetResult, map[string]interface{}) {
 	var source map[string]interface{}
-	resp, err := s.r.es.Get().Index(tIndex).Type(tType).Id(id).Do()
+	resp, err := s.r.es.Get().Index(idx).Type(typ).Id(toString(id)).Parent(toString(parent)).Do()
 	if elastic.IsNotFound(err) {
 		return resp, nil
 	}
@@ -222,6 +284,23 @@ func (s *riverTestSuite) esGet(c *C, id string) (*elastic.GetResult, map[string]
 	err = json.Unmarshal(bytes, &source)
 	c.Assert(err, IsNil)
 	return resp, source
+}
+
+func (s *riverTestSuite) esVerify(c *C, index string, typ string, fields []string, values []interface{}) {
+	fm := s.fieldMap(fields, values)
+	result, source := s.esGet(c, index, typ, fm[idField], fm[parentField])
+	c.Assert(result.Found, Equals, true)
+	for i, f := range fields {
+		c.Assert(toString(source[f]), Equals, toString(values[i]))
+	}
+}
+
+func (s *riverTestSuite) fieldMap(fields []string, values []interface{}) map[string]interface{} {
+	m := make(map[string]interface{})
+	for i, f := range fields {
+		m[f] = values[i]
+	}
+	return m
 }
 
 func (s *riverTestSuite) riverCreate(c *C, cfgString string) *River {
@@ -246,4 +325,6 @@ func (s *riverTestSuite) riverWaitForSync(c *C) {
 	c.Assert(err, IsNil)
 }
 
-
+func toString(v interface{}) string {
+	return fmt.Sprintf("%v", v)
+}

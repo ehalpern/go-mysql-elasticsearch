@@ -92,7 +92,7 @@ func (b *Bulker) Submit() error {
 		log.Errorf(buffer.String())
 		b.LastError = errors.Errorf("%v actions failed during bulk update", count)
 	} else {
-		log.Infof("Bulk update %d/%d succeeded", size, b.MaxActions)
+		log.Debugf("Bulk update %d/%d succeeded", size, b.MaxActions)
 	}
 	return b.LastError
 }

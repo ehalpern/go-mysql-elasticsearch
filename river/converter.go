@@ -69,7 +69,7 @@ func convertAction(rule *config.Rule, action string, rows [][]interface{}) ([]el
 				req = elastic.NewBulkDeleteRequest().Index(rule.Index).Type(rule.Type).Id(id).Routing(parentId)
 			} else {
 				doc := convertRow(rule, values)
-				req = elastic.NewBulkIndexRequest().Index(rule.Index).Type(rule.Type).Parent(parentId).Id(id).Routing(parentId).Doc(doc)
+				req = elastic.NewBulkIndexRequest().Index(rule.Index).Type(rule.Type).Id(id).Parent(parentId).Doc(doc)
 			}
 			reqs = append(reqs, req)
 		}

@@ -54,12 +54,17 @@ func TestParentAndChild(t *testing.T) {
 		recreateIndex(estestIndex).
 		recreateIndexWithSettings(estestIndex, settings)
 	id := "1"
+	parentId := id
 	doc := map[string]interface{} { "name": id }
-	childDoc := map[string]interface{} { "name": id, "parent": id }
+	childDoc := map[string]interface{} { "name": id, "parent": parentId }
 	es.putDocument(estestIndex, estestType, id, "", doc).refresh(estestIndex)
-	es.putDocument(estestIndex, esChildType, id, id, childDoc).refresh(estestIndex)
+	es.putDocument(estestIndex, esChildType, id, parentId, childDoc).refresh(estestIndex)
 	result := es.searchMatchAll(estestIndex)
 	hits := result.TotalHits()
 	assert.Equal(t, int64(2), hits)
+	childResult := es.getDocument(estestIndex, esChildType, id, parentId)
+	assert.Equal(t, parentId, childResult.Parent)
 }
+
+
 

@@ -15,17 +15,17 @@ import (
 )
 
 var options = struct {
-	help         bool
-	service      string
-	config       string
-	dataDir      string
-	dbHost       string
-	dbUser       string
-	dbPassword   string
-	dbSlaveID    int
-	esHost       string
-	esMaxActions int
-	reuseDump    string
+	help         *bool
+	service      *string
+	config       *string
+	dataDir      *string
+	dbHost       *string
+	dbUser       *string
+	dbPassword   *string
+	dbSlaveID    *int
+	esHost       *string
+	esMaxActions *int
+	reuseDump    *string
 }{
 	flag.Bool("help", false, "show help"),
 	flag.String("service", "", "install|remove|[re]start|stop|status"),
@@ -34,11 +34,10 @@ var options = struct {
 	flag.String("db_host", "", fmt.Sprintf("DB host and port (%s)", config.Default.DbHost)),
 	flag.String("db_user", "", fmt.Sprintf("DB user (%s)", config.Default.DbUser)),
 	flag.String("db_pass", "", fmt.Sprintf("DB password (%s)", config.Default.DbPassword)),
-	flag.Int("db_slave_id", "", fmt.Sprintf("MySQL slave id (%s)", config.Default.DbSlaveID)),
+	flag.Int("db_slave_id", 1001, fmt.Sprintf("MySQL slave id (%s)", config.Default.DbSlaveID)),
 	flag.String("es_host", "", fmt.Sprintf("Elasticsearch host and port (%s)", config.Default.EsHost)),
-	flag.Int("es_max_actions", "", fmt.Sprintf("maximum elasticsearch bulk update size (%s)", config.Default.EsMaxActions)),
+	flag.Int("es_max_actions", 1, fmt.Sprintf("maximum elasticsearch bulk update size (%s)", config.Default.EsMaxActions)),
 	flag.String("use_dump", "", "use dump stored in this directory rather than generating new dump"),
-	flag.Bool("force_dump", "", "force dump database before resuming replciaton"),
 }
 
 func main() {

@@ -87,7 +87,7 @@ func (r *Rule) ParentId(row []interface{}) (string, error) {
 	} else {
 		index := r.TableInfo.FindColumn(r.Parent)
 		if index < 0 {
-			return "", errors.Errorf("parent id not found %s(%s)", r.TableInfo.Name, r.Parent)
+			return "", errors.Errorf("parent column '%s' not found in table '%s'", r.Parent, r.TableInfo.Name)
 		}
 		return fmt.Sprint(row[index]), nil
 	}

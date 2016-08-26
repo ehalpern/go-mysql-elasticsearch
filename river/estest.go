@@ -67,14 +67,14 @@ func (tc *EsTestClient) searchMatchAll(index string) *elastic.SearchResult {
 	return result
 }
 
-func (tc *EsTestClient) putDocument(index string, typ string, id string, routeId string, doc interface{}) *EsTestClient {
-	_, err := tc.es.Index().Index(index).Type(typ).Id(id).Routing(routeId).BodyJson(doc).Do()
+func (tc *EsTestClient) putDocument(index string, typ string, id string, parentId string, doc interface{}) *EsTestClient {
+	_, err := tc.es.Index().Index(index).Type(typ).Id(id).Parent(parentId).BodyJson(doc).Do()
 	require.NoError(tc.t, err)
 	return tc
 }
 
-func (tc *EsTestClient) getDocument(index string, typ string, id string, routeId string) *elastic.GetResult {
-	result, err := tc.es.Get().Index(index).Type(typ).Id(id).Routing(routeId).Do()
+func (tc *EsTestClient) getDocument(index string, typ string, id string, parentId string) *elastic.GetResult {
+	result, err := tc.es.Get().Index(index).Type(typ).Id(id).Routing(parentId).Do()
 	if elastic.IsNotFound(err) {
 		return nil
 	}
@@ -82,8 +82,8 @@ func (tc *EsTestClient) getDocument(index string, typ string, id string, routeId
 	return result
 }
 
-func (tc *EsTestClient) getDocumentMap(index string, typ string, id string, routeId string) map[string]interface{} {
-	result := tc.getDocument(index, typ, id, routeId)
+func (tc *EsTestClient) getDocumentMap(index string, typ string, id string, parent string) map[string]interface{} {
+	result := tc.getDocument(index, typ, id, parent)
 	if result == nil {
 		return nil
 	}
