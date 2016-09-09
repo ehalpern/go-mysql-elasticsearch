@@ -1,10 +1,10 @@
 hash: c632e4649150211f3b1b70d94c3ccdcbbe0f588a845242896b17ce90851e073d
-updated: 2016-09-08T21:14:50.607726863-07:00
+updated: 2016-09-08T21:29:41.970786375-07:00
 imports:
 - name: github.com/BurntSushi/toml
-  version: ""
+  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
 - name: github.com/davecgh/go-spew
-  version: ""
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
 - name: github.com/ehalpern/go-mysql
@@ -12,41 +12,46 @@ imports:
   subpackages:
   - canal
   - schema
-  - mysql
   - client
   - dump
+  - mysql
   - replication
   - packet
 - name: github.com/juju/errors
-  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
+  version: 6f54ff6318409d31ff16261533ce2c8381a4fd5d
 - name: github.com/pmezard/go-difflib
-  version: ""
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/satori/go.uuid
-  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
+  version: d41af8bb6a7704f00bc3b7cba9355ae6a5a80048
 - name: github.com/siddontang/go
-  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
+  version: 354e14e6c093c661abb29fd28403b3c19cff5514
   subpackages:
   - log
   - sync2
   - ioutil2
   - hack
 - name: github.com/stretchr/testify
-  version: ""
+  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
   subpackages:
   - assert
   - require
 - name: github.com/takama/daemon
-  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
+  version: 3bf393c2cc2cbbc7e31e1b91c897798dabad5621
   repo: git@github.com:ehalpern/daemon.git
+- name: golang.org/x/net
+  version: 9313baa13d9262e49d07b20ed57dceafcd7240cc
+  subpackages:
+  - context
+  - context/ctxhttp
 - name: gopkg.in/olivere/elastic.v3
-  version: ""
+  version: f9fd15e1ea3a50bbe58c72a4b8820499fe3bb0e1
   subpackages:
   - backoff
   - uritemplates
 testImports:
 - name: github.com/go-sql-driver/mysql
-  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
+  version: 0b58b37b664c21f3010e836f1b931e1d0b0b0685
 - name: gopkg.in/check.v1
-  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
+  version: 4f90aeace3a26ad7021961c297b22c42160c7b25
