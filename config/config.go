@@ -39,7 +39,7 @@ var Default = Config {
 	1001,
 	"127.0.0.1:9200",
 	1,
-	"mydumper",
+	"/usr/local/bin/mydumper",
 	[]SourceConfig{},
 	[]*Rule{},
 }
