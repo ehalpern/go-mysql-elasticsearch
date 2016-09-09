@@ -1,5 +1,5 @@
 hash: c632e4649150211f3b1b70d94c3ccdcbbe0f588a845242896b17ce90851e073d
-updated: 2016-09-08T21:01:16.91077685-07:00
+updated: 2016-09-08T21:14:50.607726863-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: ""
@@ -18,15 +18,15 @@ imports:
   - replication
   - packet
 - name: github.com/juju/errors
-  version: 382ba367aaa9c182e1ecc515d29cbefbb5d53b30
+  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
 - name: github.com/pmezard/go-difflib
   version: ""
   subpackages:
   - difflib
 - name: github.com/satori/go.uuid
-  version: 382ba367aaa9c182e1ecc515d29cbefbb5d53b30
+  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
 - name: github.com/siddontang/go
-  version: 382ba367aaa9c182e1ecc515d29cbefbb5d53b30
+  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
   subpackages:
   - log
   - sync2
@@ -38,7 +38,7 @@ imports:
   - assert
   - require
 - name: github.com/takama/daemon
-  version: 382ba367aaa9c182e1ecc515d29cbefbb5d53b30
+  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
   repo: git@github.com:ehalpern/daemon.git
 - name: gopkg.in/olivere/elastic.v3
   version: ""
@@ -47,6 +47,6 @@ imports:
   - uritemplates
 testImports:
 - name: github.com/go-sql-driver/mysql
-  version: 382ba367aaa9c182e1ecc515d29cbefbb5d53b30
+  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
 - name: gopkg.in/check.v1
-  version: 382ba367aaa9c182e1ecc515d29cbefbb5d53b30
+  version: 1053ea040c2e57d9a9dc5516c7fd58be968654c4
