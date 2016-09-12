@@ -36,7 +36,7 @@ var options = struct {
 	flag.String("db_pass", "", fmt.Sprintf("DB password (%s)", config.Default.DbPassword)),
 	flag.Int("db_slave_id", 1001, fmt.Sprintf("MySQL slave id (%s)", config.Default.DbSlaveID)),
 	flag.String("es_host", "", fmt.Sprintf("Elasticsearch host and port (%s)", config.Default.EsHost)),
-	flag.Int("es_max_actions", 1, fmt.Sprintf("maximum elasticsearch bulk update size (%s)", config.Default.EsMaxActions)),
+	flag.Int("es_max_actions", config.Default.EsMaxActions, fmt.Sprintf("maximum elasticsearch bulk update size (%s)", config.Default.EsMaxActions)),
 	flag.String("use_dump", "", "use dump stored in this directory rather than generating new dump"),
 }
 

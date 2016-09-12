@@ -22,8 +22,9 @@ func TestBulker(t *testing.T) {
 		insertAction(bulkerIndex, bulkerType, "3"),
 	}
 	var maxActions int = 2
+	var maxBytes int64 = 5000
 
-	bulker := NewBulker(es.es, maxActions)
+	bulker := NewBulker(es.es, maxActions, maxBytes)
 	bulker.Add([]elastic.BulkableRequest{actions[0]})
 	es.refresh(bulkerIndex)
 

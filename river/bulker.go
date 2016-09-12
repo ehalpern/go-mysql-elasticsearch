@@ -13,6 +13,7 @@ import (
 type Bulker struct {
 	bulker       *elastic.BulkService  // Underlying service for building a submitting requests
 	MaxActions   int                   // When this # of actions have been added, request is auto submitted
+	MaxBytes     int64
 	Stats        *BulkerStats          // Statistics
 	LastError    error                 // Error, if any, from last Submit
 	LastResponse *elastic.BulkResponse // Response, if any, from last Submit
@@ -26,11 +27,11 @@ type BulkerStats struct {
 }
 
 // NewBulker constructs a new Bulker
-func NewBulker(es *elastic.Client, maxActions int) *Bulker {
+func NewBulker(es *elastic.Client, maxActions int, maxBytes int64) *Bulker {
 	if maxActions == 0 {
 		maxActions = 1
 	}
-	return &Bulker{ es.Bulk(), maxActions, new(BulkerStats), nil, nil }
+	return &Bulker{ es.Bulk(), maxActions, maxBytes, new(BulkerStats), nil, nil }
 }
 
 // Count returns the number of actions added since the last Submit
@@ -53,10 +54,11 @@ func (b *Bulker) Add(actions []elastic.BulkableRequest) error {
 		}
 		b.Stats.Total++
 		b.bulker.Add(req)
-		log.Debugf("Adding %v", req)
 	}
 
-	if (b.bulker.NumberOfActions() >= b.MaxActions) {
+	if b.bulker.EstimatedSizeInBytes() >= b.MaxBytes {
+		b.Submit()
+	} else if (b.bulker.NumberOfActions() >= b.MaxActions) {
 		b.Submit()
 	}
 	return b.LastError

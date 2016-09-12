@@ -73,7 +73,7 @@ func (r *River) prepareCanal() error {
 		r.canal.AddDumpDatabases(dbs...)
 	}
 
-	s := syncer{r.rules, NewBulker(r.es, r.config.EsMaxActions)}
+	s := syncer{r.rules, NewBulker(r.es, r.config.EsMaxActions, r.config.EsMaxBytes)}
 	r.canal.RegRowsEventHandler(&s)
 
 	return nil

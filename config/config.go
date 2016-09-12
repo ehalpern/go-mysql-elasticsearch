@@ -20,6 +20,7 @@ type Config struct {
 	DbSlaveID    uint32 `toml:"db_slave_id"`
 	EsHost       string `toml:"es_host"`
 	EsMaxActions int    `toml:"es_max_actions"`
+	EsMaxBytes   int64  `toml:"es_max_bytes"`
 	DumpExec     string
 	Sources      []SourceConfig `toml:"source"`
 	Rules        []*Rule `toml:"rule"`
@@ -38,7 +39,8 @@ var Default = Config {
 	"",
 	1001,
 	"127.0.0.1:9200",
-	1,
+	0,
+	99 * 1024 * 1024,
 	"/usr/local/bin/mydumper",
 	[]SourceConfig{},
 	[]*Rule{},
@@ -62,9 +64,6 @@ func NewConfig(data string) (*Config, error) {
 	c := Default
 	if _, err := toml.Decode(data, &c); err != nil {
 		return nil, err
-	}
-	if c.EsMaxActions == 0 {
-		c.EsMaxActions = 1
 	}
 	return &c, nil
 }

@@ -16,6 +16,7 @@ func TestDefaults(t *testing.T) {
 	assert.Equal(t, Default.DbSlaveID, c.DbSlaveID)
 	assert.Equal(t, Default.EsHost, c.EsHost)
 	assert.Equal(t, Default.EsMaxActions, c.EsMaxActions)
+	assert.Equal(t, Default.EsMaxBytes, c.EsMaxBytes)
 }
 
 func TestOverrides(t *testing.T) {
@@ -27,6 +28,7 @@ db_pass = "password1"
 db_slave_id = 4
 es_host = "es.test.com:9200"
 es_max_actions = 50
+es_max_bytes = 5000000
 `)
 	assert.Nil(t, err)
 	assert.Equal(t, "./var/test", c.DataDir)
@@ -36,6 +38,7 @@ es_max_actions = 50
 	assert.Equal(t, uint32(4), c.DbSlaveID)
 	assert.Equal(t, "es.test.com:9200", c.EsHost)
 	assert.Equal(t, 50, c.EsMaxActions)
+	assert.Equal(t, int64(5000000), c.EsMaxBytes)
 }
 
 func TestRules(t *testing.T) {
