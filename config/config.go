@@ -21,7 +21,7 @@ type Config struct {
 	EsHost       string `toml:"es_host"`
 	EsMaxActions int    `toml:"es_max_actions"`
 	EsMaxBytes   int64  `toml:"es_max_bytes"`
-	DumpExec     string
+	DumpExec     string `toml:"dump_exec"`
 	Sources      []SourceConfig `toml:"source"`
 	Rules        []*Rule `toml:"rule"`
 }
@@ -41,7 +41,7 @@ var Default = Config {
 	"127.0.0.1:9200",
 	0,
 	99 * 1024 * 1024,
-	"/usr/local/bin/mydumper",
+	"mydumper",
 	[]SourceConfig{},
 	[]*Rule{},
 }

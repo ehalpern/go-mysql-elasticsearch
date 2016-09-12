@@ -161,18 +161,18 @@ func (d *Dumper) mydumper(w io.Writer) error {
 	if err != nil {
 		panic(err)
 	}
-	var newest *os.FileInfo = nil
+	var prev *os.FileInfo = nil
 	for _, f := range files {
 		if f.IsDir() && strings.HasPrefix(f.Name(), "mydumper") {
-			if newest == nil || f.ModTime().After((*newest).ModTime()) {
-				newest = &f
+			if prev == nil || f.ModTime().After((*prev).ModTime()) {
+				if _, err := os.Stat("/tmp/" + f.Name() + "/complete"); err == nil {
+					copy := f; prev = &copy
+				}
 			}
 		}
 	}
-	if newest != nil {
-		if _, err := os.Stat("/tmp/" + (*newest).Name() + "/complete"); err == nil {
-			dumpDir = "/tmp/" + (*newest).Name()
-		}
+	if prev != nil {
+		dumpDir = "/tmp/" + (*prev).Name()
 	}
 	if dumpDir != "" {
 		log.Infof("Reusing existing dump at %s", dumpDir)
@@ -226,7 +226,6 @@ func (d *Dumper) mydumper(w io.Writer) error {
 		log.Infof("Executing dump: %+v", cmd)
 		if err := cmd.Run(); err == nil {
 			f := os.NewFile(0, dumpDir + "/complete"); f.Close()
-
 			err = d.parseDumpOuput(dumpDir, w)
 		}
 		return err
