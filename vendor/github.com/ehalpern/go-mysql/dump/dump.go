@@ -156,7 +156,28 @@ func (d *Dumper) mysqldump(w io.Writer) error {
 }
 
 func (d *Dumper) mydumper(w io.Writer) error {
-	if dumpDir, err := ioutil.TempDir("", "mydumper"); err != nil {
+	dumpDir := ""
+	files, err := ioutil.ReadDir("/tmp")
+	if err != nil {
+		panic(err)
+	}
+	var newest *os.FileInfo = nil
+	for _, f := range files {
+		if f.IsDir() && strings.HasPrefix(f.Name(), "mydumper") {
+			if newest == nil || f.ModTime().After((*newest).ModTime()) {
+				newest = &f
+			}
+		}
+	}
+	if newest != nil {
+		if _, err := os.Stat("/tmp/" + (*newest).Name() + "/complete"); err == nil {
+			dumpDir = "/tmp/" + (*newest).Name()
+		}
+	}
+	if dumpDir != "" {
+		log.Infof("Reusing existing dump at %s", dumpDir)
+		return d.parseDumpOuput(dumpDir, w)
+	} else if dumpDir, err := ioutil.TempDir("", "mydumper"); err != nil {
 		return err
 	} else {
 		//defer os.RemoveAll(dumpDir)
@@ -204,6 +225,8 @@ func (d *Dumper) mydumper(w io.Writer) error {
 		cmd.Stdout = os.Stdout
 		log.Infof("Executing dump: %+v", cmd)
 		if err := cmd.Run(); err == nil {
+			f := os.NewFile(0, dumpDir + "/complete"); f.Close()
+
 			err = d.parseDumpOuput(dumpDir, w)
 		}
 		return err

@@ -1,5 +1,5 @@
 hash: c632e4649150211f3b1b70d94c3ccdcbbe0f588a845242896b17ce90851e073d
-updated: 2016-09-11T20:53:11.531314245-07:00
+updated: 2016-09-11T21:03:13.736876821-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: ""
@@ -8,25 +8,25 @@ imports:
   subpackages:
   - spew
 - name: github.com/ehalpern/go-mysql
-  version: 065d36946837ea6feb273f020cd2ba8cecc2e21d
+  version: 85d98fc2713fe0474b44e0806e3779a22dcc1e79
   subpackages:
   - canal
   - schema
+  - mysql
   - client
   - dump
-  - mysql
   - replication
   - packet
 - name: github.com/juju/errors
-  version: 065d36946837ea6feb273f020cd2ba8cecc2e21d
+  version: 2cffe3a999de77bbd01f6345cfc1f4ebe894ecc3
 - name: github.com/pmezard/go-difflib
   version: ""
   subpackages:
   - difflib
 - name: github.com/satori/go.uuid
-  version: ""
+  version: 2cffe3a999de77bbd01f6345cfc1f4ebe894ecc3
 - name: github.com/siddontang/go
-  version: ""
+  version: 2cffe3a999de77bbd01f6345cfc1f4ebe894ecc3
   subpackages:
   - log
   - sync2
@@ -38,10 +38,10 @@ imports:
   - assert
   - require
 - name: github.com/takama/daemon
-  version: 065d36946837ea6feb273f020cd2ba8cecc2e21d
+  version: 2cffe3a999de77bbd01f6345cfc1f4ebe894ecc3
   repo: git@github.com:ehalpern/daemon.git
 - name: golang.org/x/net
-  version: 065d36946837ea6feb273f020cd2ba8cecc2e21d
+  version: 2cffe3a999de77bbd01f6345cfc1f4ebe894ecc3
   subpackages:
   - context
   - context/ctxhttp
@@ -52,6 +52,6 @@ imports:
   - uritemplates
 testImports:
 - name: github.com/go-sql-driver/mysql
-  version: 065d36946837ea6feb273f020cd2ba8cecc2e21d
+  version: 2cffe3a999de77bbd01f6345cfc1f4ebe894ecc3
 - name: gopkg.in/check.v1
-  version: 065d36946837ea6feb273f020cd2ba8cecc2e21d
+  version: 2cffe3a999de77bbd01f6345cfc1f4ebe894ecc3
