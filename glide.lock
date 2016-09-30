@@ -1,5 +1,5 @@
 hash: fca7de33da5b66798f0a87b426f5e7e00ddce3d55a6a0c01ca1662d438cee193
-updated: 2016-09-29T21:36:13.601456787-07:00
+updated: 2016-09-29T22:55:08.83533687-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
@@ -8,7 +8,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/ehalpern/go-mysql
-  version: 9b7f0ef849227fbfa2f90be04ffa41f710d4fdb4
+  version: 2e4953d543e30b30a4856a04b46de02c2d4d4166
   subpackages:
   - canal
   - schema

@@ -45,6 +45,7 @@ func (c *Canal) startSyncBinlog() error {
 		log.Debugf("Syncing %v", ev)
 		switch e := ev.Event.(type) {
 		case *replication.RotateEvent:
+			c.flushEventHandlers()
 			pos.Name = string(e.NextLogName)
 			pos.Pos = uint32(e.Position)
 			// r.ev <- pos
