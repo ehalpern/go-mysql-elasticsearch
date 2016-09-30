@@ -189,9 +189,16 @@ func convertRow(rule *config.Rule, values []interface{}) map[string]interface{} 
 }
 
 func convertUpdateRow(rule *config.Rule, before []interface{}, after []interface{}) map[string]interface{} {
-	doc := make(map[string]interface{}, len(before))
+	doc := make(map[string]interface{}, len(after))
 	for i, c := range rule.TableInfo.Columns {
-		if !reflect.DeepEqual(before[i], after[i]) {
+		if len(after) <= i {
+			// New column may have been to schema before update was processed. This is due
+			// to design flaw in go-mysql that reads most recent schema when restarting
+			// replication rather than updating schema based on replication log contents.
+			break;
+		}
+		if len(before) <= i || !reflect.DeepEqual(before[i], after[i]) {
+			// Update doc if field wasn't in or is different from original row
 			field, value := convertField(rule, &c, after[i])
 			doc[field] = value
 		}
