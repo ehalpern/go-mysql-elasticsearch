@@ -1,57 +1,57 @@
-hash: c632e4649150211f3b1b70d94c3ccdcbbe0f588a845242896b17ce90851e073d
-updated: 2016-09-11T22:11:14.599012436-07:00
+hash: fca7de33da5b66798f0a87b426f5e7e00ddce3d55a6a0c01ca1662d438cee193
+updated: 2016-09-29T21:36:13.601456787-07:00
 imports:
 - name: github.com/BurntSushi/toml
-  version: ""
+  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
 - name: github.com/davecgh/go-spew
-  version: ""
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
 - name: github.com/ehalpern/go-mysql
-  version: d85de550e73dbbe5abe8aa1dde70f7499bc5d83c
+  version: 9b7f0ef849227fbfa2f90be04ffa41f710d4fdb4
   subpackages:
   - canal
   - schema
-  - mysql
   - client
   - dump
+  - mysql
   - replication
   - packet
 - name: github.com/juju/errors
-  version: 1b3731b9896de2008d7df4e1c8d9e736fb5b53a9
+  version: 6f54ff6318409d31ff16261533ce2c8381a4fd5d
 - name: github.com/pmezard/go-difflib
-  version: ""
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/satori/go.uuid
-  version: 1b3731b9896de2008d7df4e1c8d9e736fb5b53a9
+  version: d41af8bb6a7704f00bc3b7cba9355ae6a5a80048
 - name: github.com/siddontang/go
-  version: 1b3731b9896de2008d7df4e1c8d9e736fb5b53a9
+  version: 354e14e6c093c661abb29fd28403b3c19cff5514
   subpackages:
   - log
   - sync2
   - ioutil2
   - hack
 - name: github.com/stretchr/testify
-  version: ""
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
   - require
 - name: github.com/takama/daemon
-  version: 1b3731b9896de2008d7df4e1c8d9e736fb5b53a9
+  version: 3bf393c2cc2cbbc7e31e1b91c897798dabad5621
   repo: git@github.com:ehalpern/daemon.git
 - name: golang.org/x/net
-  version: 1b3731b9896de2008d7df4e1c8d9e736fb5b53a9
+  version: a333c534c871727fb95745870e8b98a69447f2ce
   subpackages:
   - context
   - context/ctxhttp
 - name: gopkg.in/olivere/elastic.v3
-  version: ""
+  version: 3f5e619b7a90ff8d4ad81a53ca8e74ee79b83b42
   subpackages:
   - backoff
   - uritemplates
 testImports:
 - name: github.com/go-sql-driver/mysql
-  version: 1b3731b9896de2008d7df4e1c8d9e736fb5b53a9
+  version: 0b58b37b664c21f3010e836f1b931e1d0b0b0685
 - name: gopkg.in/check.v1
-  version: 1b3731b9896de2008d7df4e1c8d9e736fb5b53a9
+  version: 4f90aeace3a26ad7021961c297b22c42160c7b25

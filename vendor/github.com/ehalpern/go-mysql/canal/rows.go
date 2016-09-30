@@ -1,8 +1,8 @@
 package canal
 
 import (
-	"github.com/juju/errors"
 	"github.com/ehalpern/go-mysql/schema"
+	"github.com/juju/errors"
 )
 
 const (
@@ -37,7 +37,7 @@ func GetPKValues(table *schema.Table, row []interface{}) ([]interface{}, error) 
 	indexes := table.PKColumns
 	if len(indexes) == 0 {
 		return nil, errors.Errorf("table %s has no PK", table)
-	} else if len(table.Columns) != len(row) {
+	} else if len(table.Columns) < len(row) {   // Ok if schema has added a column
 		return nil, errors.Errorf("table %s has %d columns, but row data %v len is %d", table,
 			len(table.Columns), row, len(row))
 	}

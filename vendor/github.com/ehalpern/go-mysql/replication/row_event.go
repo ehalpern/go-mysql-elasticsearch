@@ -185,7 +185,9 @@ func (e *TableMapEvent) Dump(w io.Writer) {
 	fmt.Fprintf(w, "Schema: %s\n", e.Schema)
 	fmt.Fprintf(w, "Table: %s\n", e.Table)
 	fmt.Fprintf(w, "Column count: %d\n", e.ColumnCount)
-	fmt.Fprintf(w, "Column type: \n%s", hex.Dump(e.ColumnType))
+	for i, t := range e.ColumnType {
+		fmt.Fprintf(w, "\t%3d: %-10s %#04x\n", i, ColumnTypeString(t), e.ColumnMeta[i])
+	}
 	fmt.Fprintf(w, "NULL bitmap: \n%s", hex.Dump(e.NullBitmap))
 	fmt.Fprintln(w)
 }

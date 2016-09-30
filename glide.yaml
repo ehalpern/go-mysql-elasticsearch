@@ -16,5 +16,6 @@ import:
   version: ~3.0.45
 - package: github.com/takama/daemon
   repo: git@github.com:ehalpern/daemon.git
+- package: github.com/ehalpern/go-mysql
 testImport:
 - package: gopkg.in/check.v1
