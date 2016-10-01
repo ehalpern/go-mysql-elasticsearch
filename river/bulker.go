@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"gopkg.in/olivere/elastic.v3"
-	"github.com/juju/errors"
 	"github.com/siddontang/go/log"
 )
 
