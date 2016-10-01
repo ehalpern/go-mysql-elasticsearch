@@ -1,5 +1,5 @@
 hash: fca7de33da5b66798f0a87b426f5e7e00ddce3d55a6a0c01ca1662d438cee193
-updated: 2016-10-01T08:33:40.700262738-07:00
+updated: 2016-10-01T11:27:02.879251912-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
@@ -41,7 +41,7 @@ imports:
   version: 3bf393c2cc2cbbc7e31e1b91c897798dabad5621
   repo: git@github.com:ehalpern/daemon.git
 - name: golang.org/x/net
-  version: 0d8126fc6144eb5257485c59148128691e8ff849
+  version: cd95c68ba21fc7ee16ee38cc420473e3d8c4afd8
   subpackages:
   - context
   - context/ctxhttp
