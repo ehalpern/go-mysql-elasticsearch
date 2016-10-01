@@ -45,6 +45,10 @@ func GetPKValues(table *schema.Table, row []interface{}) ([]interface{}, error) 
 	values := make([]interface{}, 0, len(indexes))
 
 	for _, index := range indexes {
+		keyPart := row[index]
+		if keyPart == nil {
+			return nil, errors.Errorf("row in %s has no PK: %v", table, row)
+		}
 		values = append(values, row[index])
 	}
 

@@ -98,17 +98,11 @@ func convertUpdate(rule *config.Rule, rows [][]interface{}) ([]elastic.BulkableR
 		if err != nil {
 			return nil, errors.Trace(err)
 		}
-		if beforeID == "" {
-			log.Errorf("No id provided in before update row: %v\n", rows[i])
-		}
 
 		afterID, err := rule.DocId(rows[i+1])
 
 		if err != nil {
 			return nil, errors.Trace(err)
-		}
-		if afterID == "" {
-			log.Errorf("No id provided in after update row: %v\n", rows[i+1])
 		}
 
 		beforeParentID, afterParentID := "", ""

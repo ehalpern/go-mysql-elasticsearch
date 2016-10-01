@@ -1,5 +1,5 @@
 hash: fca7de33da5b66798f0a87b426f5e7e00ddce3d55a6a0c01ca1662d438cee193
-updated: 2016-09-29T22:55:08.83533687-07:00
+updated: 2016-10-01T08:33:40.700262738-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
@@ -8,7 +8,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/ehalpern/go-mysql
-  version: 2e4953d543e30b30a4856a04b46de02c2d4d4166
+  version: 0ca5bff94b32991dd942e95ba8933228dd394ab3
   subpackages:
   - canal
   - schema
@@ -41,12 +41,12 @@ imports:
   version: 3bf393c2cc2cbbc7e31e1b91c897798dabad5621
   repo: git@github.com:ehalpern/daemon.git
 - name: golang.org/x/net
-  version: a333c534c871727fb95745870e8b98a69447f2ce
+  version: 0d8126fc6144eb5257485c59148128691e8ff849
   subpackages:
   - context
   - context/ctxhttp
 - name: gopkg.in/olivere/elastic.v3
-  version: 3f5e619b7a90ff8d4ad81a53ca8e74ee79b83b42
+  version: eaecbad7a83e6b60f131825553e5eb7fd5a50b41
   subpackages:
   - backoff
   - uritemplates
