@@ -1,6 +1,8 @@
 package canal
 
 import (
+	"fmt"
+
 	"github.com/ehalpern/go-mysql/schema"
 	"github.com/juju/errors"
 )
@@ -45,8 +47,8 @@ func GetPKValues(table *schema.Table, row []interface{}) ([]interface{}, error) 
 	values := make([]interface{}, 0, len(indexes))
 
 	for _, index := range indexes {
-		keyPart := row[index]
-		if keyPart == nil {
+		keyPart := fmt.Sprintf("%v", row[index])
+		if keyPart == "" {
 			return nil, errors.Errorf("row in %s has no PK: %v", table, row)
 		}
 		values = append(values, row[index])

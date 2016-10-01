@@ -95,13 +95,13 @@ func convertUpdate(rule *config.Rule, rows [][]interface{}) ([]elastic.BulkableR
 
 	for i := 0; i < len(rows); i += 2 {
 		beforeID, err := rule.DocId(rows[i])
-		if err != nil || beforeID == "" {
+		if err != nil {
 			log.Warnf("skipping row update due to problem with before update values: %v\n", err)
 			continue
 		}
 
 		afterID, err := rule.DocId(rows[i+1])
-		if err != nil || afterID == "" {
+		if err != nil {
 			log.Warnf("skipping row update due to problem with update values: %v\n", err)
 			continue
 		}
