@@ -58,7 +58,8 @@ func convertAction(rule *config.Rule, action string, rows [][]interface{}) ([]el
 
 	for _, values := range rows {
 		if id, err := rule.DocId(values); err != nil {
-			return nil, err
+			log.Warnf("skipping row %s due to: %v\n", action, err)
+			continue
 		} else {
 			var req elastic.BulkableRequest
 
