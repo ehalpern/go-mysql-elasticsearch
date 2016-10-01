@@ -52,6 +52,7 @@ func (b *Bulker) Add(actions []elastic.BulkableRequest) error {
 			b.Stats.UpdateCount++
 		}
 		b.Stats.Total++
+		log.Infof("Adding %s\n", req.String())
 		b.bulker.Add(req)
 	}
 
